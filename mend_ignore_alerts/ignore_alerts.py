@@ -14,7 +14,10 @@ from mend_ignore_alerts.const import aliases, varenvs
 
 logger = logging.getLogger(__tool_name__)
 logger.setLevel(logging.DEBUG)
-is_debug = logging.DEBUG if os.environ.get("DEBUG").lower() == 'true' else logging.INFO
+try:
+    is_debug = logging.DEBUG if os.environ.get("DEBUG").lower() == 'true' else logging.INFO
+except:
+    is_debug = logging.INFO
 
 formatter = logging.Formatter('[%(asctime)s] %(levelname)5s %(message)s', "%Y-%m-%d %H:%M:%S")
 s_handler = logging.StreamHandler()
