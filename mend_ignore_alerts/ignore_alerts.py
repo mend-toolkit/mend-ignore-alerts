@@ -101,7 +101,7 @@ def call_ws_api(data, header={"Content-Type": "application/json"}, method="POST"
         res = res_.text if res_.status_code == 200 else ""
 
     except Exception as err:
-        res = f"Error was raised. {try_or_error(lambda: err.args[0].reason.args[0], '')}"
+        res = f"Error was raised. {err}"
         logger.error(f'[{ex()}] {err}')
     return res
 
