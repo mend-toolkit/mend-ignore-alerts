@@ -13,7 +13,7 @@ on:
   #   - cron: '0 4 * * *'
 
 env:
-  TOOL_NAME: mend_tool_name
+  TOOL_NAME: mend_ignore_alerts
   GH_USER: ${{ github.actor }}
   COMMIT_ID: ${{ github.sha }}
 

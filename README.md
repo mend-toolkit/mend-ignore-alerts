@@ -4,9 +4,9 @@
 [![CI](https://github.com/whitesource-ps/mend-import-sbom/actions/workflows/ci.yml/badge.svg)](https://github.com/whitesource-ps/mend-import-sbom/actions/workflows/ci.yml/badge.svg)
 [![GitHub release](https://img.shields.io/github/v/release/whitesource-ps/ws-import-sbom)](https://github.com/whitesource-ps/ws-import-sbom/releases/latest)  
 
-# TOOL NAME
+# Ignore Alerts
 
-TOOL DESCRIPTION  
+Set Ignore status for alert based on whaiver Yaml  
 
 <hr>
 
@@ -31,7 +31,7 @@ TOOL DESCRIPTION
 
 ## Installation
 ```
-$ pip install mend-TOOL-NAME
+$ pip install mend-ignore-alerts
 ```
 > **Note:** Depending on whether the package was installed as a root user or not, you need to make sure the package installation location was added to the `$PATH` environment variable.
 
@@ -40,41 +40,28 @@ $ pip install mend-TOOL-NAME
 > 
 > Command-line arguments take precedence over environment variables.  
 
-| CLI argument                   | Env. Variable   |   Type   | Required | Description                                                                              |
-|:-------------------------------|:----------------|:--------:|:--------:|:-----------------------------------------------------------------------------------------|
-| **&#x2011;&#x2011;help**       |                 | `switch` |    No    | Show help and exit                                                                       |
-| **&#x2011;&#x2011;user-key**   | `WS_USERKEY`    | `string` |   Yes    | Mend User Key                                                                            |
-| **&#x2011;&#x2011;api-key**    | `WS_APIKEY`     | `string` |   Yes    | Mend API Key                                                                             |
-| **&#x2011;&#x2011;url**        | `WS_WSS_URL`    | `string` |   Yes    | Mend Server URL                                                                          |
-| **&#x2011;&#x2011;input**      |                 | `string` |   Yes    | SBOM report file to import (`*.json` or `*.csv`)                                         |
-| **&#x2011;&#x2011;scope**      | `WS_SCOPE`      | `string` |   No*    | Product and Project names to create/update. Expected format: `"PRODUCT//PROJECT"`        |
-| **&#x2011;&#x2011;updateType** | `WS_UPDATETYPE` | `string` |    No    | APPEND or OVERRIDE results when importing into an existing project (default: `OVERRIDE`) |
-| **&#x2011;&#x2011;dir**        |                 | `string` |    No    | Output directory for the `update-request.txt` file** in Offline mode (default: `$PWD`)   |
-| **&#x2011;&#x2011;offline**    | `WS_OFFLINE`    |  `bool`  |    No    | Create offline update request file without uploading to Mend (default: `false`)          |
-
-> \* `--scope` specifies the hierarchy (full or partial) for uploading the SBOM report using product and project identifiers.  
-> Both the product and project can be identified by either names (for creating a new one) or token (for updating an existing one).  
->   
-> * `--scope "ProductName//ProjectName"` would specify both the product name and project name to create/update.  
-> * `--scope "ProjectName"` would specify only the project name, and the product name would default to `Mend-Imports`.  
-> * `--scope "ProjectToken"` would specify the token of an existing project, and the product name would default to that project's parent product. When specifying a project token, you cannot specify a product name/token.  
-> * If `--scope` isn't specified, the project name will be taken from the SBOM's `name` property (for `*.json` SPDX) or its parent directory (for `*.csv`).
->  
-> ** See more details about the [update-request.txt](https://docs.mend.io/bundle/wsk/page/does_mend_have_the_ability_to_scan_when_offline_and_then_upload_the_scan_results_when_online_.html) file and [Offline mode](https://docs.mend.io/csh?context=2524153159&topicname=unified_agent_-_advanced_topics.html#Scanning-in-Offline-Mode)  in Mend's documentation.  
+| CLI argument                 | Env. Variable   |   Type   | Required | Description                       |
+|:-----------------------------|:----------------|:--------:|:--------:|:----------------------------------|
+| **&#x2011;&#x2011;help**     |                 | `switch` |    No    | Show help and exit                |
+| **&#x2011;&#x2011;user-key** | `WS_USERKEY`    | `string` |   Yes    | Mend User Key                     |
+| **&#x2011;&#x2011;api-key**  | `WS_APIKEY`     | `string` |   Yes    | Mend API Key                      |
+| **&#x2011;&#x2011;url**      | `WS_WSS_URL`    | `string` |   Yes    | Mend Server URL                   |
+| **&#x2011;&#x2011;waiver**   | `WS_WAIVER`    | `string` |   Yes    | Filename of Yaml file for parsing |
 
 
 ## Usage
 **Using command-line arguments only:**
 ```shell
-import_sbom --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --input $SBOM_FILE_PATH --scope "ProductName//ProjectName" --dir $OUTPUT_DIRECTORY
+import_sbom --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --waiver $WS_WAIVER
 ```
 **Using environment variables:**
 ```shell
 export WS_USERKEY=xxxxxxxxxxx
 export WS_APIKEY=xxxxxxxxxxx
 export WS_WSS_URL=https://saas.mend.io
+export WS_WAYVER=waiverexample.yml
 
-import_sbom --input $SBOM_FILE_PATH --scope "ProductName//ProjectName"
+ignore_alerts
 ```
 > **Note:** Either form is accepted. For the rest of the examples, the latter form would be used  
 
