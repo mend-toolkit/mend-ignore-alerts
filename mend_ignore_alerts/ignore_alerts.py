@@ -70,8 +70,8 @@ def parse_args():
                         default=varenvs.get_env("wsapikey"), required=not varenvs.get_env("wsapikey"))
     parser.add_argument(*aliases.get_aliases_str("url"), help="Mend server URL", dest='ws_url',
                         default=varenvs.get_env("wsurl"), required=not varenvs.get_env("wsurl"))
-    parser.add_argument(*aliases.get_aliases_str("projectkey"), help="Mend project scope", dest='scope_token',
-                        default=varenvs.get_env("wsproject"))
+    #parser.add_argument(*aliases.get_aliases_str("projectkey"), help="Mend project scope", dest='scope_token',
+    #                    default=varenvs.get_env("wsproject"))
     parser.add_argument(*aliases.get_aliases_str("yaml"), help="YAML file", dest='yaml',
                         default=varenvs.get_env("waiver"), required=not varenvs.get_env("waiver"))
     parser.add_argument(*aliases.get_aliases_str("githubpat"), help="GitHub PAT", dest='pat',
@@ -270,10 +270,10 @@ def main():
 
     try:
         args = parse_args()
-        if args.pat and args.repo and args.owner:
+        if args.pat and args.repo and (args.owner or "/" in args.repo):
             try:
                 g = Github(args.pat)
-                repo = g.get_repo(f'{args.owner}/{args.repo}')
+                repo = g.get_repo(f'{args.repo}') if "/" in args.repo else g.get_repo(f'{args.owner}/{args.repo}')
                 input_data = repo.get_contents(args.yaml).decoded_content.decode("utf-8")
             except Exception as err:
                 logger.error(f"Access to {args.owner}/{args.repo} forbidden")
