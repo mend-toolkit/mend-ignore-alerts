@@ -185,8 +185,8 @@ def is_vuln_in_ignored(vulnerability, ign_list):
         for key, value in ign_.items():
             if vulnerability.strip() == key:
                 logger.info(f"key*{key}*, vuln*{vulnerability.strip()}*")
-                return True, value
-    return False, ""
+                return 1, value
+    return 0, ""
 
 
 def read_yaml(yml_file):
@@ -242,7 +242,7 @@ def exec_input_yaml(input_data):
                     note = data_["note"]
                     status, note_ign = is_vuln_in_ignored(vulnerability=data_["vuln_id"],ign_list=ignored_al)
                     logger.info(status)
-                    if not status:
+                    if status == 0:
                         logger.info(alerts)
                         alert_uuid = ""
                         for alert_ in alerts:
