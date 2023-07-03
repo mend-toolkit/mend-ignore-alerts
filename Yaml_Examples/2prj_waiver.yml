@@ -1,0 +1,158 @@
+- app_id: 1
+  name: easybuggy_1
+  vulns:
+   - effective_date: '2022-04-08'
+     note: A deserialization flaw was found in Apache Chainsaw versions prior to 2.1.0
+        which could lead to malicious code execution.
+     vuln_id: CVE-2020-9493
+   - effective_date: '2021-10-20'
+     note: The TransformerFactory in Apache Xalan-Java before 2.7.2 does not properly
+        restrict access to certain properties when FEATURE_SECURE_PROCESSING is enabled,
+        which allows remote attackers to bypass expected restrictions and load arbitrary
+        classes or access external resources via a crafted (1) xalan:content-header, (2)
+        xalan:entities, (3) xslt:content-header, or (4) xslt:entities property, or a Java
+        property that is bound to the XSLT 1.0 system-property function.
+     vuln_id: CVE-2014-0107
+   - effective_date: '2022-05-12'
+     note: Improper validation of certificate with host mismatch in Apache Log4j SMTP
+        appender. This could allow an SMTPS connection to be intercepted by a man-in-the-middle
+        attack which could leak any log messages sent through that appender. Fixed in
+        Apache Log4j 2.12.3 and 2.13.1
+     vuln_id: CVE-2020-9488
+   - effective_date: '2023-02-23'
+     note: ESAPI (The OWASP Enterprise Security API) is a free, open source, web application
+        security control library. Prior to version 2.3.0.0, the default implementation
+        of `Validator.getValidDirectoryPath(String, String, File, boolean)` may incorrectly
+        treat the tested input string as a child of the specified parent directory. This
+        potentially could allow control-flow bypass checks to be defeated if an attack
+        can specify the entire string representing the 'input' path. This vulnerability
+        is patched in release 2.3.0.0 of ESAPI. As a workaround, it is possible to write
+        one's own implementation of the Validator interface. However, maintainers do not
+        recommend this.
+     vuln_id: CVE-2022-23457
+   - effective_date: '2023-02-24'
+     note: CVE-2020-9493 identified a deserialization issue that was present in Apache
+        Chainsaw. Prior to Chainsaw V2.0 Chainsaw was a component of Apache Log4j 1.2.x
+        where the same issue exists.
+     vuln_id: CVE-2022-23307
+   - effective_date: '2023-06-23'
+     note: ESAPI (The OWASP Enterprise Security API) is a free, open source, web application
+        security control library. Prior to version 2.3.0.0, there is a potential for a
+        cross-site scripting vulnerability in ESAPI caused by a incorrect regular expression
+        for "onsiteURL" in the **antisamy-esapi.xml** configuration file that can cause
+        "javascript:" URLs to fail to be correctly sanitized. This issue is patched in
+        ESAPI 2.3.0.0. As a workaround, manually edit the **antisamy-esapi.xml** configuration
+        files to change the "onsiteURL" regular expression. More information about remediation
+        of the vulnerability, including the workaround, is available in the maintainers'
+        release notes and security bulletin.
+     vuln_id: CVE-2022-24891
+   - effective_date: '2022-10-05'
+     note: JMSAppender in Log4j 1.2 is vulnerable to deserialization of untrusted data
+        when the attacker has write access to the Log4j configuration. The attacker can
+        provide TopicBindingName and TopicConnectionFactoryBindingName configurations
+        causing JMSAppender to perform JNDI requests that result in remote code execution
+        in a similar fashion to CVE-2021-44228. Note this issue only affects Log4j 1.2
+        when specifically configured to use JMSAppender, which is not the default. Apache
+        Log4j 1.2 reached end of life in August 2015. Users should upgrade to Log4j 2
+        as it addresses numerous other issues from the previous versions.
+     vuln_id: CVE-2021-4104
+   - effective_date: '2023-02-24'
+     note: By design, the JDBCAppender in Log4j 1.2.x accepts an SQL statement as a configuration
+        parameter where the values to be inserted are converters from PatternLayout. The
+        message converter, %m, is likely to always be included. This allows attackers
+        to manipulate the SQL by entering crafted strings into input fields or headers
+        of an application that are logged allowing unintended SQL queries to be executed.
+        Note this issue only affects Log4j 1.x when specifically configured to use the
+        JDBCAppender, which is not the default. Beginning in version 2.0-beta8, the JDBCAppender
+        was re-introduced with proper support for parameterized SQL queries and further
+        customization over the columns written to in logs. Apache Log4j 1.2 reached end
+        of life in August 2015. Users should upgrade to Log4j 2 as it addresses numerous
+        other issues from the previous versions.
+     vuln_id: CVE-2022-23305
+   - effective_date: '2022-12-14'
+     note: Included in Log4j 1.2 is a SocketServer class that is vulnerable to deserialization
+        of untrusted data which can be exploited to remotely execute arbitrary code when
+        combined with a deserialization gadget when listening to untrusted network traffic
+        for log data. This affects Log4j versions up to 1.2 up to 1.2.17.
+     vuln_id: CVE-2019-17571
+   - effective_date: '2023-02-24'
+     note: JMSSink in all versions of Log4j 1.x is vulnerable to deserialization of untrusted
+        data when the attacker has write access to the Log4j configuration or if the configuration
+        references an LDAP service the attacker has access to. The attacker can provide
+        a TopicConnectionFactoryBindingName configuration causing JMSSink to perform JNDI
+        requests that result in remote code execution in a similar fashion to CVE-2021-4104.
+        Note this issue only affects Log4j 1.x when specifically configured to use JMSSink,
+        which is not the default. Apache Log4j 1.2 reached end of life in August 2015.
+        Users should upgrade to Log4j 2 as it addresses numerous other issues from the
+        previous versions.
+     vuln_id: CVE-2022-23302
+   - effective_date: '2023-05-05'
+     note: 'The Apache Xalan Java XSLT library is vulnerable to an integer truncation
+        issue when processing malicious XSLT stylesheets. This can be used to corrupt
+        Java class files generated by the internal XSLTC compiler and execute arbitrary
+        Java bytecode. Users are recommended to update to version 2.7.3 or later. Note:
+        Java runtimes (such as OpenJDK) include repackaged copies of Xalan.'
+     vuln_id: CVE-2022-34169
+- app_id: 2
+  name: OneNewProject
+  vulns:
+   - effective_date: '2022-10-28'
+     note: libcurl keeps previously used connections in a connection pool for subsequenttransfers
+        to reuse, if one of them matches the setup.Due to errors in the logic, the config
+        matching function did not take 'issuercert' into account and it compared the involved
+        paths *case insensitively*,which could lead to libcurl reusing wrong connections.File
+        paths are, or can be, case sensitive on many systems but not all, and caneven
+        vary depending on used file systems.The comparison also didn't include the 'issuer
+        cert' which a transfer can setto qualify how to verify the server certificate.
+     vuln_id: CVE-2021-22924
+   - effective_date: '2022-10-26'
+     note: An issue was discovered in giflib through 5.1.4. DumpScreen2RGB in gif2rgb.c
+        has a heap-based buffer over-read.
+     vuln_id: CVE-2020-23922
+   - effective_date: '2021-06-29'
+     note: idn in libidn before 1.33 might allow remote attackers to obtain sensitive
+        memory information by reading a zero byte as input, which triggers an out-of-bounds
+        read, a different vulnerability than CVE-2015-8948.
+     vuln_id: CVE-2016-6262
+   - effective_date: '2021-06-29'
+     note: The idna_to_ascii_4i function in lib/idna.c in libidn before 1.33 allows context-dependent
+        attackers to cause a denial of service (out-of-bounds read and crash) via 64 bytes
+        of input.
+     vuln_id: CVE-2016-6261
+   - effective_date: '2023-04-27'
+     note: 'Vulnerability in the Oracle Java SE, Oracle GraalVM Enterprise Edition product
+        of Oracle Java SE (component: JNDI). Supported versions that are affected are
+        Oracle Java SE: 8u341, 8u345-perf, 11.0.16.1, 17.0.4.1, 19; Oracle GraalVM Enterprise
+        Edition: 20.3.7, 21.3.3 and 22.2.0. Difficult to exploit vulnerability allows
+        unauthenticated attacker with network access via multiple protocols to compromise
+        Oracle Java SE, Oracle GraalVM Enterprise Edition. Successful attacks of this
+        vulnerability can result in unauthorized update, insert or delete access to some
+        of Oracle Java SE, Oracle GraalVM Enterprise Edition accessible data. Note: This
+        vulnerability applies to Java deployments, typically in clients running sandboxed
+        Java Web Start applications or sandboxed Java applets, that load and run untrusted
+        code (e.g., code that comes from the internet) and rely on the Java sandbox for
+        security. This vulnerability can also be exploited by using APIs in the specified
+        Component, e.g., through a web service which supplies data to the APIs. CVSS 3.1
+        Base Score 3.7 (Integrity impacts). CVSS Vector: (CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N).'
+     vuln_id: CVE-2022-21624
+   - effective_date: '2020-12-07'
+     note: Integer overflow in the decode_digit function in puny_decode.c in Libidn2
+        before 2.0.4 allows remote attackers to cause a denial of service or possibly
+        have unspecified other impact.
+     vuln_id: CVE-2017-14062
+   - effective_date: '2023-04-27'
+     note: 'Vulnerability in the Oracle Java SE, Oracle GraalVM Enterprise Edition product
+        of Oracle Java SE (component: Security). Supported versions that are affected
+        are Oracle Java SE: 8u341, 8u345-perf, 11.0.16.1, 17.0.4.1, 19; Oracle GraalVM
+        Enterprise Edition: 20.3.7, 21.3.3 and 22.2.0. Difficult to exploit vulnerability
+        allows unauthenticated attacker with network access via multiple protocols to
+        compromise Oracle Java SE, Oracle GraalVM Enterprise Edition. Successful attacks
+        of this vulnerability can result in unauthorized update, insert or delete access
+        to some of Oracle Java SE, Oracle GraalVM Enterprise Edition accessible data.
+        Note: This vulnerability applies to Java deployments, typically in clients running
+        sandboxed Java Web Start applications or sandboxed Java applets, that load and
+        run untrusted code (e.g., code that comes from the internet) and rely on the Java
+        sandbox for security. This vulnerability can also be exploited by using APIs in
+        the specified Component, e.g., through a web service which supplies data to the
+        APIs. CVSS 3.1 Base Score 3.7 (Integrity impacts). CVSS Vector: (CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N).'
+     vuln_id: CVE-2022-21619
