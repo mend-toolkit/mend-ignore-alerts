@@ -180,7 +180,7 @@ def get_ingnored_alerts(project):
 
 
 def is_vuln_in_ignored(vulnerability, ign_list):
-    logger.info(f"Ignored:{ign_list}")
+    logger.info(f"Ignored:{ign_list},{vulnerability}")
     for ign_ in ign_list:
         for key, value in ign_.items():
             if vulnerability.strip() == key:
@@ -236,12 +236,12 @@ def exec_input_yaml(input_data):
         if prj_token:
             #restore_alerts(project=prj_token)
             ignored_al = get_ingnored_alerts(project=prj_token)
-            print(ignored_al)
             alerts = get_alerts_by_type(prj_token=prj_token, alert_type="SECURITY_VULNERABILITY")
             try:
                 for data_ in el_["vulns"]:
                     note = data_["note"]
                     status, note_ign = is_vuln_in_ignored(vulnerability=data_["vuln_id"],ign_list=ignored_al)
+                    logger.info(status)
                     if not status:
                         alert_uuid = ""
                         for alert_ in alerts:
