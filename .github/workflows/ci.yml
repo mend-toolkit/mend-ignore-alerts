@@ -41,7 +41,7 @@ jobs:
           if [[ ${{ strategy.job-index }} == 0 ]]; then
             echo "MIN_PY_VER=${{ matrix.python-version }}" >> $GITHUB_OUTPUT
           fi
-          echo "VERSION=0.2.2" >> $GITHUB_OUTPUT
+          echo "VERSION=0.1.3" >> $GITHUB_OUTPUT
           echo "RELEASE=false" >> $GITHUB_OUTPUT
           echo "TOOL_DIR=${{env.TOOL_NAME}}" >> $GITHUB_OUTPUT
           if [[ "$GITHUB_REF" == *"refs/tags/v"* || "$GITHUB_REF" == *"refs/tags/test-v"* ]]; then
