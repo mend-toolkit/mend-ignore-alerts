@@ -1,8 +1,6 @@
 [![Logo](https://resources.mend.io/mend-sig/logo/mend-dark-logo-horizontal.png)](https://www.mend.io/)  
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-yellowgreen.svg)](https://opensource.org/licenses/Apache-2.0)
-[![CI](https://github.com/whitesource-ps/mend-import-sbom/actions/workflows/ci.yml/badge.svg)](https://github.com/whitesource-ps/mend-import-sbom/actions/workflows/ci.yml/badge.svg)
-[![GitHub release](https://img.shields.io/github/v/release/whitesource-ps/ws-import-sbom)](https://github.com/whitesource-ps/ws-import-sbom/releases/latest)  
 
 # Ignore Alerts
 
@@ -40,65 +38,92 @@ $ pip install mend-ignore-alerts
 > 
 > Command-line arguments take precedence over environment variables.  
 
-| CLI argument                 | Env. Variable   |   Type   | Required | Description                       |
-|:-----------------------------|:----------------|:--------:|:--------:|:----------------------------------|
-| **&#x2011;&#x2011;help**     |                 | `switch` |    No    | Show help and exit                |
-| **&#x2011;&#x2011;user-key** | `WS_USERKEY`    | `string` |   Yes    | Mend User Key                     |
-| **&#x2011;&#x2011;api-key**  | `WS_APIKEY`     | `string` |   Yes    | Mend API Key                      |
-| **&#x2011;&#x2011;url**      | `WS_WSS_URL`    | `string` |   Yes    | Mend Server URL                   |
-| **&#x2011;&#x2011;waiver**   | `WS_WAIVER`    | `string` |   Yes    | Filename of Yaml file for parsing |
+| CLI argument                 | Env. Variable |   Type   | Required | Description                       |
+|:-----------------------------|:--------------|:--------:|:--------:|:----------------------------------|
+| **&#x2011;&#x2011;help**     |               | `switch` |    No    | Show help and exit                |
+| **&#x2011;&#x2011;user-key** | `WS_USERKEY`  | `string` |   Yes    | Mend User Key                     |
+| **&#x2011;&#x2011;api-key**  | `WS_APIKEY`   | `string` |   Yes    | Mend API Key                      |
+| **&#x2011;&#x2011;url**      | `WS_WSS_URL`  | `string` |   Yes    | Mend Server URL                   |
+| **&#x2011;&#x2011;yaml**     | `WS_WAIVER`   | `string` |   Yes    | Filename of Yaml file for parsing |
+| **&#x2011;&#x2011;ghpat**    | `WS_GHPAT`    | `string` |    No    | GitHub PAT                        |
+| **&#x2011;&#x2011;ghowner**  | `WS_GHOWNER`  | `string` |    No    | GitHub Owner                      |
+| **&#x2011;&#x2011;ghrepo**   | `WS_GHREPO`   | `string` |    No    | GitHub Repo name                  |
 
 
 ## Usage
 **Using command-line arguments only:**
 ```shell
-import_sbom --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --waiver $WS_WAIVER
+ignore_alerts --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --yaml $WS_WAIVER
 ```
 **Using environment variables:**
 ```shell
 export WS_USERKEY=xxxxxxxxxxx
 export WS_APIKEY=xxxxxxxxxxx
-export WS_WSS_URL=https://saas.mend.io
+export WS_URL=https://saas.mend.io
 export WS_WAYVER=waiverexample.yml
 
 ignore_alerts
 ```
 > **Note:** Either form is accepted. For the rest of the examples, the latter form would be used  
 
+**Getting waiver file from GitHub Repo:**
+```shell
+export WS_USERKEY=xxxxxxxxxxx
+export WS_APIKEY=xxxxxxxxxxx
+export WS_URL=https://saas.mend.io
+export WS_WAYVER=waiverexample.yml
+export WS_GHPAT=xxxxxxxxxxx
+export WS_GHOWNER = xxxxxxxxxxx
+export WS_GHREPO = TestRepoName 
+
+ignore_alerts
+```
+
+**Running script as part of CI process:**
+The example of CI yaml file
+```yaml
+name: Ignore Alert Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          pip install mend-ignore-alerts
+
+      - name: Run ignore_alert script
+        env:
+          WS_APIKEY: ${{ secrets.apikey }}
+          USER_KEY: ${{ secrets.userkey }}
+          WS_URL: "saas.mend.io"
+          YAML: "examplewaiver.yml"
+          
+        run: 
+          ignore_alerts --url $WS_URL --yaml $YAML --apiKey $WS_APIKEY --user-key $USER_KEY
+```
+
+The YAML file should be placed in the Repo folder on GitHub 
+
 ## Execution Examples
 
-> **Note:** In the following examples, $WS_USERKEY, $WS_APIKEY and $WS_WSS_URL are assumed to have been exported as environment variables.  
-
-Import SPDX SBOM into a new Mend project
+> **Note:** In the following examples, $WS_USERKEY, $WS_APIKEY and $WS_URL are assumed to have been exported as environment variables.  
 
 ```shell
-$ import_sbom --scope "$WS_PRODUCTNAME//$WS_PROJECTNAME" --dir $HOME/reports --input $HOME/reports/$WS_PROJECTNAME-sbom.json
+$ ignore_alerts --yaml whaiverexample.yml
 ```
 
-Convert SPDX SBOM to an [offline update request](https://docs.mend.io/bundle/wsk/page/understanding_update_requests.html) file for creating a new Mend project under a specific product
+Usind examplewaiver.yml file from some Repo
 
 ```shell
-$ import_sbom --scope "$WS_PRODUCTNAME//$WS_PROJECTNAME" --dir $HOME/reports --input $HOME/reports/my-project-sbom.json --offline True
+$ ignore_alerts --yaml whaiverexample.yml --ghpat xxxxxxx --ghowner Owner --ghrepo RepoName  
 ```
-
-Convert SPDX SBOM to an [offline update request](https://docs.mend.io/bundle/wsk/page/understanding_update_requests.html) file for overriding an existing Mend project
-
-```shell
-$ import_sbom --scope "$WS_PRODUCTNAME//$WS_PROJECTNAME" --dir $HOME/reports --input $HOME/reports/my-project-sbom.json --offline True
-
-$ import_sbom --scope $WS_PROJECTTOKEN --dir $HOME/reports --input $HOME/reports/my-project-sbom.json --offline True
-```
-
-Convert SPDX SBOM to an [offline update request](https://docs.mend.io/bundle/wsk/page/understanding_update_requests.html) file for appending to an existing Mend project
-
-```shell
-$ import_sbom --scope "$WS_PRODUCTNAME//$WS_PROJECTNAME" --dir $HOME/reports --input $HOME/reports/my-project-sbom.json --offline True --updateType APPEND
-
-$ import_sbom --scope $WS_PROJECTTOKEN --dir $HOME/reports --input $HOME/reports/my-project-sbom.json --offline True --updateType APPEND
-```
-
-## Other Section
-
-### Other Subsection
-Details  
-
