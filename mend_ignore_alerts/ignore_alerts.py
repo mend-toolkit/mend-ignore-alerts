@@ -243,6 +243,7 @@ def exec_input_yaml(input_data):
                     status, note_ign = is_vuln_in_ignored(vulnerability=data_["vuln_id"],ign_list=ignored_al)
                     logger.info(status)
                     if not status:
+                        logger.info(alerts)
                         alert_uuid = ""
                         for alert_ in alerts:
                             if alert_["vulnerability"]["name"] == data_["vuln_id"] and "SNYK" not in data_["vuln_id"]:
