@@ -1,0 +1,57 @@
+- app_id: 606
+  name: 'its-web-app'
+  vulns:
+    - vuln_id: 'CVE-2022-3970'
+      note: 'No immediate upgrade path for tiff on alpine 3.17'
+      effective_date: '2023-06-13'
+- app_id: 58
+  name: 'webui-frontend'
+  vulns:
+    - vuln_id: 'SNYK-JS-CHARTJS-1018716'
+      note: 'Waived because upgrades would include multiple breaking changes; This will be addressed when classic ui is deprecated on July 23'
+      effective_date: '2023-03-09'
+- app_id: 70
+  name: 'library-elasticsearch-rest'
+  vulns:
+    - vuln_id: 'CVE-2017-12629,SNYK-JAVA-ORGAPACHELUCENE-31569'
+      note: 'As stated within the vuln itself: "Note: Elasticsearch, although it uses Lucene, is NOT vulnearble to this." additionally our service does not use...'
+      effective_date: '2023-04-17'
+    - vuln_id: 'CVE-2019-7611,SNYK-JAVA-ORGELASTICSEARCH-460546'
+      note: 'This vulnerabilty appears to apply to elasticsearch servers as it concerns security settings on the server that would otherwise be bypassed if...'
+      effective_date: '2023-04-17'
+- app_id: 21
+  name: 'service-query'
+  vulns:
+    - vuln_id: 'CVE-2017-12629,SNYK-JAVA-ORGAPACHELUCENE-31569,CVE-2019-7611,SNYK-JAVA-ORGELASTICSEARCH-460546'
+      note: 'No immediate upgrade path from ES2 to ES5'
+      effective_date: '2023-05-04'
+- app_id: 93
+  name: 'svc-webrouter'
+  vulns:
+    - vuln_id: 'SNYK-JAVA-ORGGLASSFISHJERSEYMEDIA-595972'
+      note: 'The webrouter does not use this package for XML parsing'
+      effective_date: '2023-04-17'
+- app_id: 133
+  name: 'service-vm-export'
+  vulns:
+    - vuln_id: 'CVE-2019-7611,SNYK-JAVA-ORGELASTICSEARCH-460546'
+      note: 'Service VM Export Vulns'
+      effective_date: '2023-04-17'
+- app_id: 185
+  name: 'service-chart-exporter'
+  vulns:
+    - vuln_id: 'SNYK-JS-LODASHSET-1320032'
+      note: 'This package is a transitive dependency and version 4.3.2 being brought in is already the latest version available, no immediate upgrade path or...'
+      effective_date: '2023-04-01'
+- app_id: 229
+  name: 'service-lumin-es-query'
+  vulns:
+    - vuln_id: 'SNYK-JAVA-ORGBOUNCYCASTLE-3136316'
+      note: 'Affected version of this package are vulnerable to Improper Authentication.  Changes to the JVM garbage collector in Java 13 and later trigger an...'
+      effective_date: '2023-03-13'
+- app_id: 311
+  name: 'building-application-service'
+  vulns:
+    - vuln_id: 'SNYK-JAVA-ORGSPRINGFRAMEWORKBOOT-5441321'
+      note: 'Application is not deployed to Cloud Foundry so not impacted per http://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORKBOOT-5441321'
+      effective_date: '2023-04-24'
