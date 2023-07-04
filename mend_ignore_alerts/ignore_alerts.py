@@ -229,7 +229,8 @@ def set_ignore_alert(alert_uuid, comment):
 
 
 def exec_input_yaml(input_data):
-    for el_ in input_data:
+    input_data_ = [input_data] if type(input_data) is dict else input_data
+    for el_ in input_data_:
         prj_token = get_token_by_prj_name(el_["name"])
         if prj_token:
             #restore_alerts(project=prj_token)
