@@ -70,10 +70,18 @@ def parse_args():
                         default=varenvs.get_env("wsapikey"), required=not varenvs.get_env("wsapikey"))
     parser.add_argument(*aliases.get_aliases_str("url"), help="Mend server URL", dest='ws_url',
                         default=varenvs.get_env("wsurl"), required=not varenvs.get_env("wsurl"))
-    #parser.add_argument(*aliases.get_aliases_str("projectkey"), help="Mend project scope", dest='scope_token',
-    #                    default=varenvs.get_env("wsproject"))
+    parser.add_argument(*aliases.get_aliases_str("productkey"), help="Mend product scope", dest='producttoken',
+                        default=varenvs.get_env("wsproduct"))
+    parser.add_argument(*aliases.get_aliases_str("projectkey"), help="Mend project scope", dest='projecttoken',
+                        default=varenvs.get_env("wsproject"))
+    parser.add_argument(*aliases.get_aliases_str("exclude"), help="Exclude Mend project/product scope", dest='exclude',
+                        default=varenvs.get_env("wsexclude"))
+    parser.add_argument(*aliases.get_aliases_str("mode"), help="Creation YAML file or loading", dest='mode',
+                        default=varenvs.get_env("wsmode"), required=not varenvs.get_env("wsmode"))
     parser.add_argument(*aliases.get_aliases_str("yaml"), help="YAML file", dest='yaml',
-                        default=varenvs.get_env("waiver"), required=not varenvs.get_env("waiver"))
+                        default=varenvs.get_env("yaml"))
+    parser.add_argument(*aliases.get_aliases_str("output"), help="Output YAML file", dest='outfile',
+                        default=os.getcwd())
     parser.add_argument(*aliases.get_aliases_str("githubpat"), help="GitHub PAT", dest='pat',
                         default=varenvs.get_env("githubpat"))
     parser.add_argument(*aliases.get_aliases_str("githubrepo"), help="GitHub Repo", dest='repo',
@@ -83,6 +91,56 @@ def parse_args():
     arguments = parser.parse_args()
 
     return arguments
+
+
+def get_project_list():
+    def get_prj_name(token):
+        data_prj = json.dumps({
+            "requestType": "getProjectVitals",
+            "userKey": args.ws_user_key,
+            "projectToken": token
+        })
+        return json.loads(call_ws_api(data=data_prj))["projectVitals"][0]["name"]
+
+    res = []
+    if args.projecttoken:
+        res.extend([{x: get_prj_name(x)} for x in args.projecttoken.split(",")])
+
+    if args.producttoken:
+        products = args.producttoken.split(",")
+        for product_ in products:
+            data_prj = json.dumps(
+                {"requestType": "getAllProjects",
+                 "userKey": args.ws_user_key,
+                 "productToken": product_,
+                 })
+            prj_data = json.loads(call_ws_api(data=data_prj))["projects"]
+            res.extend([{x["projectToken"]: x["projectName"]} for x in prj_data])
+    elif not args.projecttoken:
+        data_prj = json.dumps(
+            {"requestType": "getOrganizationProjectVitals",
+             "userKey": args.ws_user_key,
+             "orgToken": args.apikey,
+             })
+        prj_data = json.loads(call_ws_api(data=data_prj))["projectVitals"]
+        res.extend([{x["token"]: x["name"]} for x in prj_data])
+
+    exclude_tokens = []
+    if args.exclude:
+        excludes = args.exclude.split(",")
+        for exclude_ in excludes:
+            data_prj = json.dumps(
+                {"requestType": "getAllProjects",
+                 "userKey": args.ws_user_key,
+                 "productToken": exclude_,
+                 })
+            try:
+                prj_data = json.loads(call_ws_api(data=data_prj))["projects"]
+                exclude_tokens.extend([x["projectToken"] for x in prj_data])
+            except:
+                exclude_tokens.append(exclude_)
+        res = list(set(res) - set(exclude_tokens))
+    return res
 
 
 def extract_url(url: str) -> str:
@@ -107,6 +165,34 @@ def call_ws_api(data, header={"Content-Type": "application/json"}, method="POST"
         res = f"Error was raised. {err}"
         logger.error(f'[{ex()}] {err}')
     return res
+
+
+def create_yaml_ignored_alerts(prj_tokens):
+    try:
+        data_yml = []
+        for token_ in prj_tokens:
+            for key, value in token_.items():
+                alerts = get_ingnored_alerts(key)  # By project token
+                vuln = []
+                if alerts:
+                    for alert_ in alerts:
+                        for key_, value_ in alert_.items():
+                            vuln.append(
+                                {
+                                    'id_vuln': key_,
+                                    'note': value_,
+                                }
+                            )
+                if vuln:
+                    data_yml.append({
+                        'name': value,  # Project Name
+                        'vulns': vuln
+                    })
+        with open(f'{args.outfile}', 'w') as file:
+            yaml.dump(data_yml, file)
+        logger.info(f"The file {args.outfile}.yaml created successfully")
+    except Exception as err:
+        logger.error(f"The file {args.outfile}.yaml was not created. Details: {err}")
 
 
 def create_waiver():
@@ -196,7 +282,7 @@ def read_yaml(yml_file):
 def get_token_by_prj_name(prj_name):
     for prj_ in short_lst_prj:
         for key, value in prj_.items():
-            if value["name"] == prj_name:
+            if value == prj_name:
                 return key
     return ""
 
@@ -239,19 +325,20 @@ def exec_input_yaml(input_data):
             try:
                 for data_ in el_["vulns"]:
                     note = data_["note"]
-                    status, note_ign = is_vuln_in_ignored(vulnerability=data_["vuln_id"],ign_list=ignored_al)
+                    vuln_id = try_or_error(lambda: data_["vuln_id"], data_["id_vuln"])
+                    status, note_ign = is_vuln_in_ignored(vulnerability=vuln_id,ign_list=ignored_al)
                     if not status:
                         alert_uuid = ""
                         for alert_ in alerts:
-                            if alert_["vulnerability"]["name"] == data_["vuln_id"] and "SNYK" not in data_["vuln_id"]:
+                            if alert_["vulnerability"]["name"] == vuln_id and "SNYK" not in vuln_id:
                                 alert_uuid = alert_["alertUuid"]
                                 break
                         if alert_uuid :
                             logger.info(set_ignore_alert(alert_uuid=alert_uuid,comment=note))
                         else:
-                            logger.info(f"The {data_['vuln_id']} was not found")
+                            logger.info(f"The {vuln_id} was not found")
                     else:
-                        logger.warning(f"The vulnerability {data_['vuln_id']} in project {el_['name']} "
+                        logger.warning(f"The vulnerability {vuln_id} in project {el_['name']} "
                                     f"has been ignored already with comment: {note_ign}")
             except Exception as err:
                 logger.error(f"Error: {err}")
@@ -279,18 +366,24 @@ def main():
                 logger.error(f"Access to {args.owner}/{args.repo} forbidden")
         #create_waiver()
         logger.info(f'[{fn()}] Getting project list')
+        '''
         load_prj = json.dumps({
             "requestType" : "getOrganizationProjectVitals",
              "userKey": args.ws_user_key,
              "orgToken" : args.ws_token
         })
-        short_lst_prj = [{x["token"]: {"product": ["productName"], "name": x["name"]}} for x in json.loads(call_ws_api(data=load_prj))["projectVitals"]]
+        short_lst_prj = [{x["token"]: {"product": x["productName"], "name": x["name"]}} for x in json.loads(call_ws_api(data=load_prj))["projectVitals"]]
         logger.info(f'[{fn()}] Analyzing YAML file')
-        try:
-            input_data = yaml.safe_load(input_data) if input_data else read_yaml(args.yaml)
-            exec_input_yaml(input_data=input_data)
-        except Exception as err:
-            logger.error(f"[{fn()}] Impossible to parse file {args.yaml}. Details: {err}")
+        '''
+        short_lst_prj = get_project_list()
+        if args.mode.lower() == "create":
+            create_yaml_ignored_alerts(short_lst_prj)
+        elif args.yaml:
+            try:
+                input_data = yaml.safe_load(input_data) if input_data else read_yaml(args.yaml)
+                exec_input_yaml(input_data=input_data)
+            except Exception as err:
+                logger.error(f"[{fn()}] Impossible to parse file {args.yaml}. Details: {err}")
         logger.info(f'[{fn()}] Operation was finished successfully')
     except Exception as err:
         logger.error(f'[{fn()}] Failed to getting project list. Details: {err}')

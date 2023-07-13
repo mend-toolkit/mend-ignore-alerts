@@ -5,15 +5,16 @@ import os
 class aliases(Enum): # List of aliases for params
     apikey = ("--apiKey","--api-key", "--orgToken")
     userkey = ("--user-key", "--userKey")
+    url = ("--url", "--mendUrl")
     projectkey = ("--scope", "--projectToken")
     productkey = ("--productToken", "--product")
-    url = ("--url", "--mendUrl")
-    output = ("--out", "--dir")
-    sbom = ("--sbom", "--input")
+    exclude = ("--exclude", "-exclude")
     yaml = ("--yaml", "-yaml")
     githubpat = ("--ghpat", "-ghpat")
     githubowner = ("--ghowner", "-ghowner")
     githubrepo = ("--ghrepo", "-ghrepo")
+    output = ("--out", "-out")
+    mode = ("--mode", "-mode")
 
     @classmethod
     def get_aliases_str(cls, key):
@@ -32,10 +33,12 @@ class varenvs(Enum): # Lit of Env.variables
     wsscope = ("WS_SCOPE","MEND_SCOPE")
     wsproduct = ("WS_PRODUCTTOKEN", "MEND_PRODUCTTOKEN")
     wsproject = ("WS_PROJECTTOKEN", "MEND_PROJECTTOKEN")
-    waiver = ("MEND_WAIVER", "WS_WAIVER")
+    wsexclude = ("WS_EXCLUDE", "MEND_EXCLUDE")
+    yaml = ("MEND_YAML", "WS_YAML")
     githubpat = ("WS_GHPAT", "MEND_GHPAT", "GHPAT")
     githubowner = ("WS_GHOWNER", "MEND_GHOWNER", "GHOWNER")
     githubrepo = ("WS_GHREPO", "MEND_GHREPO", "GHREPO")
+    wsmode = ("WS_MODE","MEND_MODE")
 
     @classmethod
     def get_env(cls, key):
