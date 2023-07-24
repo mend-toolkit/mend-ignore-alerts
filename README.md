@@ -4,7 +4,7 @@
 
 # Ignore Alerts
 
-Set Ignore status for alert based on whaiver Yaml  
+Set Ignore status for alert based on input YAML file  
 
 <hr>
 
@@ -38,29 +38,30 @@ $ pip install mend-ignore-alerts
 > 
 > Command-line arguments take precedence over environment variables.  
 
-| CLI argument                 | Env. Variable |   Type   | Required | Description                       |
-|:-----------------------------|:--------------|:--------:|:--------:|:----------------------------------|
-| **&#x2011;&#x2011;help**     |               | `switch` |    No    | Show help and exit                |
-| **&#x2011;&#x2011;user-key** | `WS_USERKEY`  | `string` |   Yes    | Mend User Key                     |
-| **&#x2011;&#x2011;api-key**  | `WS_APIKEY`   | `string` |   Yes    | Mend API Key                      |
-| **&#x2011;&#x2011;url**      | `WS_WSS_URL`  | `string` |   Yes    | Mend Server URL                   |
-| **&#x2011;&#x2011;yaml**     | `WS_WAIVER`   | `string` |   Yes    | Filename of Yaml file for parsing |
-| **&#x2011;&#x2011;ghpat**    | `WS_GHPAT`    | `string` |    No    | GitHub PAT                        |
-| **&#x2011;&#x2011;ghowner**  | `WS_GHOWNER`  | `string` |    No    | GitHub Owner                      |
-| **&#x2011;&#x2011;ghrepo**   | `WS_GHREPO`   | `string` |    No    | GitHub Repo name                  |
+| CLI argument                 | Env. Variable |   Type   | Required | Description                                                                                                       |
+|:-----------------------------|:--------------|:--------:|:--------:|:------------------------------------------------------------------------------------------------------------------|
+| **&#x2011;&#x2011;help**     |               | `switch` |    No    | Show help and exit                                                                                                |
+| **&#x2011;&#x2011;user-key** | `WS_USERKEY`  | `string` |   Yes    | Mend User Key                                                                                                     |
+| **&#x2011;&#x2011;api-key**  | `WS_APIKEY`   | `string` |   Yes    | Mend API Key                                                                                                      |
+| **&#x2011;&#x2011;url**      | `WS_URL`      | `string` |   Yes    | Mend Server URL                                                                                                   |
+| **&#x2011;&#x2011;yaml**     | `WS_YAML`     | `string` |   Yes    | Yaml file's name for parsing in case `mode` is equal `load`. If `mode` is `create` then Yaml file will be created |
+| **&#x2011;&#x2011;mode**     | `WS_MODE`     | `string` |   Yes    | `create` or `load` value                                                                                          |
+| **&#x2011;&#x2011;ghpat**    | `WS_GHPAT`    | `string` |    No    | GitHub PAT                                                                                                        |
+| **&#x2011;&#x2011;ghowner**  | `WS_GHOWNER`  | `string` |    No    | GitHub Owner                                                                                                      |
+| **&#x2011;&#x2011;ghrepo**   | `WS_GHREPO`   | `string` |    No    | GitHub Repo name                                                                                                  |
 
 
 ## Usage
 **Using command-line arguments only:**
 ```shell
-ignore_alerts --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --yaml $WS_WAIVER
+ignore_alerts --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --yaml $WS_YAML --mode create
 ```
 **Using environment variables:**
 ```shell
 export WS_USERKEY=xxxxxxxxxxx
 export WS_APIKEY=xxxxxxxxxxx
 export WS_URL=https://saas.mend.io
-export WS_WAYVER=waiverexample.yml
+export WS_YAML=waiverexample.yml
 
 ignore_alerts
 ```
@@ -71,7 +72,7 @@ ignore_alerts
 export WS_USERKEY=xxxxxxxxxxx
 export WS_APIKEY=xxxxxxxxxxx
 export WS_URL=https://saas.mend.io
-export WS_WAYVER=waiverexample.yml
+export WS_YAML=waiverexample.yml
 export WS_GHPAT=xxxxxxxxxxx
 export WS_GHOWNER = xxxxxxxxxxx
 export WS_GHREPO = TestRepoName 
@@ -109,14 +110,14 @@ jobs:
           YAML: "examplewaiver.yml"
           
         run: 
-          ignore_alerts --url $WS_URL --yaml $YAML --apiKey $WS_APIKEY --user-key $USER_KEY
+          ignore_alerts --url $WS_URL --yaml $YAML --apiKey $WS_APIKEY --user-key $USER_KEY --mode load
 ```
 
 The YAML file should be placed in the Repo folder on GitHub 
 
 ## Execution Examples
 
-> **Note:** In the following examples, $WS_USERKEY, $WS_APIKEY and $WS_URL are assumed to have been exported as environment variables.  
+> **Note:** In the following examples, $WS_USERKEY, $WS_APIKEY, $WS_URL and $WS_MODE are assumed to have been exported as environment variables.  
 
 ```shell
 $ ignore_alerts --yaml whaiverexample.yml
@@ -125,5 +126,5 @@ $ ignore_alerts --yaml whaiverexample.yml
 Usind examplewaiver.yml file from some Repo
 
 ```shell
-$ ignore_alerts --yaml whaiverexample.yml --ghpat xxxxxxx --ghowner Owner --ghrepo RepoName  
+$ ignore_alerts --yaml whaiverexample.yml --ghpat xxxxxxx --ghowner Owner --ghrepo RepoName --mode create 
 ```
