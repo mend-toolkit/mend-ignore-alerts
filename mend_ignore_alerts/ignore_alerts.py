@@ -78,10 +78,8 @@ def parse_args():
                         default=varenvs.get_env("wsexclude"))
     parser.add_argument(*aliases.get_aliases_str("mode"), help="Creation YAML file or loading", dest='mode',
                         default=varenvs.get_env("wsmode"), required=not varenvs.get_env("wsmode"))
-    parser.add_argument(*aliases.get_aliases_str("yaml"), help="YAML file", dest='yaml',
+    parser.add_argument(*aliases.get_aliases_str("yaml"), help="Output or input YAML file", dest='yaml',
                         default=varenvs.get_env("yaml"))
-    parser.add_argument(*aliases.get_aliases_str("output"), help="Output YAML file", dest='outfile',
-                        default=os.getcwd())
     parser.add_argument(*aliases.get_aliases_str("githubpat"), help="GitHub PAT", dest='pat',
                         default=varenvs.get_env("githubpat"))
     parser.add_argument(*aliases.get_aliases_str("githubrepo"), help="GitHub Repo", dest='repo',
@@ -100,7 +98,9 @@ def get_project_list():
             "userKey": args.ws_user_key,
             "projectToken": token
         })
-        return json.loads(call_ws_api(data=data_prj))["projectVitals"][0]["name"]
+        res = json.loads(call_ws_api(data=data_prj))
+        return try_or_error(lambda: f'{res["projectVitals"][0]["productName"]}:{res["projectVitals"][0]["name"]}', try_or_error(lambda: res["errorMessage"],
+                                                      f"Internal error during getting project data by token {token}"))
 
     res = []
     if args.projecttoken:
@@ -114,16 +114,22 @@ def get_project_list():
                  "userKey": args.ws_user_key,
                  "productToken": product_,
                  })
-            prj_data = json.loads(call_ws_api(data=data_prj))["projects"]
-            res.extend([{x["projectToken"]: x["projectName"]} for x in prj_data])
+            try:
+                prj_data = json.loads(call_ws_api(data=data_prj))["projects"]
+                res.extend([{x["projectToken"]: get_prj_name(x["projectToken"])} for x in prj_data])  # x["projectName"]
+            except Exception as err:
+                pass
     elif not args.projecttoken:
         data_prj = json.dumps(
             {"requestType": "getOrganizationProjectVitals",
              "userKey": args.ws_user_key,
              "orgToken": args.apikey,
              })
-        prj_data = json.loads(call_ws_api(data=data_prj))["projectVitals"]
-        res.extend([{x["token"]: x["name"]} for x in prj_data])
+        try:
+            prj_data = json.loads(call_ws_api(data=data_prj))["projectVitals"]
+            res.extend([{x["token"]: get_prj_name(x["token"])} for x in prj_data])  # x["name"]
+        except:
+            pass
 
     exclude_tokens = []
     if args.exclude:
@@ -136,7 +142,7 @@ def get_project_list():
                  })
             try:
                 prj_data = json.loads(call_ws_api(data=data_prj))["projects"]
-                exclude_tokens.extend([x["projectToken"] for x in prj_data])
+                exclude_tokens.extend([{x["projectToken"]: get_prj_name(x["projectToken"])} for x in prj_data])  #  x["projectName"]
             except:
                 exclude_tokens.append(exclude_)
         res = list(set(res) - set(exclude_tokens))
@@ -184,15 +190,17 @@ def create_yaml_ignored_alerts(prj_tokens):
                                 }
                             )
                 if vuln:
+                    val_arr = value.split(":")
                     data_yml.append({
-                        'name': value,  # Project Name
+                        'productname': val_arr[0],  # Product Name
+                        'projectname': val_arr[1],  # Project Name
                         'vulns': vuln
                     })
-        with open(f'{args.outfile}', 'w') as file:
+        with open(f'{args.yaml}', 'w') as file:
             yaml.dump(data_yml, file)
-        logger.info(f"The file {args.outfile}.yaml created successfully")
+        return f"The file {args.yaml} created successfully"
     except Exception as err:
-        logger.error(f"The file {args.outfile}.yaml was not created. Details: {err}")
+        return f"The file {args.yaml} was not created. Details: {err}"
 
 
 def create_waiver():
@@ -279,11 +287,17 @@ def read_yaml(yml_file):
     return data
 
 
-def get_token_by_prj_name(prj_name):
+def get_token_by_prj_name(prj_name, prd_name):
     for prj_ in short_lst_prj:
         for key, value in prj_.items():
-            if value == prj_name:
-                return key
+            val_arr = value.split(":")
+            if val_arr[1] == prj_name and (val_arr[0] == prd_name or not prd_name):
+                if prd_name:
+                    return key
+                else:
+                    logger.info(f"The product is not defined in the input file; "
+                                f"the project was found just by project name {prj_name}")
+                    return key
     return ""
 
 
@@ -317,7 +331,7 @@ def set_ignore_alert(alert_uuid, comment):
 def exec_input_yaml(input_data):
     input_data_ = [input_data] if type(input_data) is dict else input_data
     for el_ in input_data_:
-        prj_token = get_token_by_prj_name(el_["name"])
+        prj_token = get_token_by_prj_name(prj_name=try_or_error(lambda: el_["name"], try_or_error(lambda: el_["projectname"], "")), prd_name=try_or_error(lambda : el_["productname"], ""))
         if prj_token:
             #restore_alerts(project=prj_token)
             ignored_al = get_ingnored_alerts(project=prj_token)
@@ -325,7 +339,7 @@ def exec_input_yaml(input_data):
             try:
                 for data_ in el_["vulns"]:
                     note = data_["note"]
-                    vuln_id = try_or_error(lambda: data_["vuln_id"], data_["id_vuln"])
+                    vuln_id = try_or_error(lambda: data_["vuln_id"], try_or_error(lambda: data_["id_vuln"], ""))
                     status, note_ign = is_vuln_in_ignored(vulnerability=vuln_id,ign_list=ignored_al)
                     if not status:
                         alert_uuid = ""
@@ -336,14 +350,14 @@ def exec_input_yaml(input_data):
                         if alert_uuid :
                             logger.info(set_ignore_alert(alert_uuid=alert_uuid,comment=note))
                         else:
-                            logger.info(f"The {vuln_id} was not found")
+                            logger.info(f"The {vuln_id} was not found in the project {try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))}")
                     else:
-                        logger.warning(f"The vulnerability {vuln_id} in project {el_['name']} "
+                        logger.warning(f"The vulnerability {vuln_id} in the project {try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))} "
                                     f"has been ignored already with comment: {note_ign}")
             except Exception as err:
                 logger.error(f"Error: {err}")
         else:
-            logger.warning(f"The project {el_['name']} was not identified")
+            logger.warning(f"The project {try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))} was not identified")
 
 
 def main():
@@ -377,7 +391,7 @@ def main():
         '''
         short_lst_prj = get_project_list()
         if args.mode.lower() == "create":
-            create_yaml_ignored_alerts(short_lst_prj)
+            logger.info(create_yaml_ignored_alerts(short_lst_prj))
         elif args.yaml:
             try:
                 input_data = yaml.safe_load(input_data) if input_data else read_yaml(args.yaml)
