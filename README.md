@@ -38,23 +38,26 @@ $ pip install mend-ignore-alerts
 > 
 > Command-line arguments take precedence over environment variables.  
 
-| CLI argument                 | Env. Variable |   Type   | Required | Description                                                                                                       |
-|:-----------------------------|:--------------|:--------:|:--------:|:------------------------------------------------------------------------------------------------------------------|
-| **&#x2011;&#x2011;help**     |               | `switch` |    No    | Show help and exit                                                                                                |
-| **&#x2011;&#x2011;user-key** | `WS_USERKEY`  | `string` |   Yes    | Mend User Key                                                                                                     |
-| **&#x2011;&#x2011;api-key**  | `WS_APIKEY`   | `string` |   Yes    | Mend API Key                                                                                                      |
-| **&#x2011;&#x2011;url**      | `WS_URL`      | `string` |   Yes    | Mend Server URL                                                                                                   |
-| **&#x2011;&#x2011;yaml**     | `WS_YAML`     | `string` |   Yes    | Yaml file's name for parsing in case `mode` is equal `load`. If `mode` is `create` then Yaml file will be created |
-| **&#x2011;&#x2011;mode**     | `WS_MODE`     | `string` |   Yes    | `create` or `load` value                                                                                          |
-| **&#x2011;&#x2011;ghpat**    | `WS_GHPAT`    | `string` |    No    | GitHub PAT                                                                                                        |
-| **&#x2011;&#x2011;ghowner**  | `WS_GHOWNER`  | `string` |    No    | GitHub Owner                                                                                                      |
-| **&#x2011;&#x2011;ghrepo**   | `WS_GHREPO`   | `string` |    No    | GitHub Repo name                                                                                                  |
 
+| CLI argument                 | Env. Variable     |   Type   | Required | Description                                                                                                       |
+|:-----------------------------|:------------------|:--------:|:--------:|:------------------------------------------------------------------------------------------------------------------|
+| **&#x2011;&#x2011;help**     |                   | `switch` |    No    | Show help and exit                                                                                                |
+| **&#x2011;&#x2011;user-key** | `WS_USERKEY`      | `string` |   Yes    | Mend User Key                                                                                                     |
+| **&#x2011;&#x2011;api-key**  | `WS_APIKEY`       | `string` |   Yes    | Mend API Key                                                                                                      |
+| **&#x2011;&#x2011;url**      | `WS_URL`          | `string` |   Yes    | Mend Server URL                                                                                                   |
+| **&#x2011;&#x2011;yaml**     | `WS_YAML`         | `string` |   Yes    | Yaml file's name for parsing in case `mode` is equal `load`. If `mode` is `create` then Yaml file will be created |
+| **&#x2011;&#x2011;mode**     | `WS_MODE`         | `string` |   Yes    | `create` or `load` value                                                                                          |
+| **&#x2011;&#x2011;product**  | `WS_PRODUCTTOKEN` | string  |    No    | Empty String <br />(Include all products) | Comma-separated list of Mend Product Tokens that should be included |
+| **&#x2011;&#x2011;scope**    | `WS_PROJECTTOKEN` | string  |    No    | Empty String <br />(Include all projects) | Comma-separated list of Mend Project Tokens that should be included                                               |
+| **&#x2011;&#x2011;exclude**  | `WS_EXCLUDETOKEN` | string  |    No    | Empty String <br /> (No exclusions) | Comma-separated list of Mend Project Tokens that should be excluded                                           |
+| **&#x2011;&#x2011;ghpat**    | `WS_GHPAT`        | `string` |    No    | GitHub PAT                                                                                                        |
+| **&#x2011;&#x2011;ghowner**  | `WS_GHOWNER`      | `string` |    No    | GitHub Owner                                                                                                      |
+| **&#x2011;&#x2011;ghrepo**   | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                  |
 
 ## Usage
 **Using command-line arguments only:**
 ```shell
-ignore_alerts --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --yaml $WS_YAML --mode create
+ignore_alerts --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --yaml $WS_YAML --mode create --product xxxxx
 ```
 **Using environment variables:**
 ```shell
@@ -62,8 +65,9 @@ export WS_USERKEY=xxxxxxxxxxx
 export WS_APIKEY=xxxxxxxxxxx
 export WS_URL=https://saas.mend.io
 export WS_YAML=waiverexample.yml
+export WS_PROJECTTOKEN = xxxxxxxxxx,yyyyyyyyyyyy
 
-ignore_alerts
+ignore_alerts --mode create
 ```
 > **Note:** Either form is accepted. For the rest of the examples, the latter form would be used  
 
@@ -77,7 +81,7 @@ export WS_GHPAT=xxxxxxxxxxx
 export WS_GHOWNER = xxxxxxxxxxx
 export WS_GHREPO = TestRepoName 
 
-ignore_alerts
+ignore_alerts --mode load
 ```
 
 **Running script as part of CI process:**
@@ -120,11 +124,11 @@ The YAML file should be placed in the Repo folder on GitHub
 > **Note:** In the following examples, $WS_USERKEY, $WS_APIKEY, $WS_URL and $WS_MODE are assumed to have been exported as environment variables.  
 
 ```shell
-$ ignore_alerts --yaml whaiverexample.yml
+$ ignore_alerts --yaml whaiverexample.yml --scope xxxxxxx,yyyyyyy --product zzzzzzzzz
 ```
 
 Usind examplewaiver.yml file from some Repo
 
 ```shell
-$ ignore_alerts --yaml whaiverexample.yml --ghpat xxxxxxx --ghowner Owner --ghrepo RepoName --mode create 
+$ ignore_alerts --yaml whaiverexample.yml --ghpat xxxxxxx --ghowner Owner --ghrepo RepoName --product xxxxxxx,yyyyyyyyyy --exclude zzzzzzzzzz 
 ```
