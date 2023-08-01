@@ -3,6 +3,7 @@ import inspect
 import json
 import logging
 import os
+import re
 import sys
 
 import requests
@@ -11,6 +12,7 @@ from github import Github
 
 from mend_ignore_alerts._version import __version__, __tool_name__, __description__
 from mend_ignore_alerts.const import aliases, varenvs
+from importlib import metadata
 
 logger = logging.getLogger(__tool_name__)
 logger.setLevel(logging.DEBUG)
@@ -26,10 +28,17 @@ s_handler.setLevel(is_debug)
 logger.addHandler(s_handler)
 logger.propagate = False
 
+try:
+    APP_VERSION = metadata.version(f'mend_{__tool_name__}') if metadata.version(f'mend_{__tool_name__}') else __version__
+except:
+    APP_VERSION = __version__
 APP_TITLE = "Ignore Alerts Parsing"
 API_VERSION = "1.4"
 args = None
 short_lst_prj = []
+token_pattern = r"^[0-9a-zA-Z]{64}$"
+uuid_pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+AGENT_INFO = {"agent": f"ps-{__tool_name__.replace('_', '-')}", "agentVersion": APP_VERSION}
 
 
 def try_or_error(supplier, msg):
@@ -47,6 +56,33 @@ def fn():
 def ex():
     e_type, e_msg, tb = sys.exc_info()
     return f'{tb.tb_frame.f_code.co_name}:{tb.tb_lineno}'
+
+
+def check_patterns():
+    res = []
+    if not (re.match(uuid_pattern, args.ws_user_key) or re.match(token_pattern, args.ws_user_key)):
+        res.append("MEND_USERKEY")
+    if not (re.match(uuid_pattern, args.ws_token) or re.match(token_pattern, args.ws_token)):
+        res.append("MEND_APIKEY")
+    if args.producttoken:
+        prods = args.producttoken.split(",")
+        for prod_ in prods:
+            if not (re.match(uuid_pattern, prod_) or re.match(token_pattern, prod_)):
+                res.append("MEND_PRODUCTTOKEN")
+                break
+    if args.projecttoken:
+        projs = args.projecttoken.split(",")
+        for proj_ in projs:
+            if not (re.match(uuid_pattern, proj_) or re.match(token_pattern, proj_)):
+                res.append("MEND_PROJECTTOKEN")
+                break
+    if args.exclude:
+        excludes = args.exclude.split(",")
+        for excl_ in excludes:
+            if not (re.match(uuid_pattern, excl_) or re.match(token_pattern, excl_)):
+                res.append("MEND_EXCLUDETOKEN")
+                break
+    return res
 
 
 def log_obj_props(obj, obj_title=""):
@@ -159,6 +195,7 @@ def extract_url(url: str) -> str:
 def call_ws_api(data, header={"Content-Type": "application/json"}, method="POST"):
     global args
     data_json = json.loads(data)
+    data_json["agentInfo"] = AGENT_INFO
     try:
         res_ = requests.request(
             method=method,
@@ -371,6 +408,12 @@ def main():
 
     try:
         args = parse_args()
+        chp_ = check_patterns()
+        if chp_:
+            logger.error("Missing or malformed configuration parameters:")
+            [logger.error(el_) for el_ in chp_]
+            exit(-1)
+
         if args.pat and args.repo and (args.owner or "/" in args.repo):
             try:
                 g = Github(args.pat)

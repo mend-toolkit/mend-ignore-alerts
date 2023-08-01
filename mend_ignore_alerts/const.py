@@ -33,7 +33,7 @@ class varenvs(Enum): # Lit of Env.variables
     wsscope = ("WS_SCOPE","MEND_SCOPE")
     wsproduct = ("WS_PRODUCTTOKEN", "MEND_PRODUCTTOKEN")
     wsproject = ("WS_PROJECTTOKEN", "MEND_PROJECTTOKEN")
-    wsexclude = ("WS_EXCLUDE", "MEND_EXCLUDE")
+    wsexclude = ("WS_EXCLUDETOKEN", "MEND_EXCLUDETOKEN")
     yaml = ("MEND_YAML", "WS_YAML")
     githubpat = ("WS_GHPAT", "MEND_GHPAT", "GHPAT")
     githubowner = ("WS_GHOWNER", "MEND_GHOWNER", "GHOWNER")
