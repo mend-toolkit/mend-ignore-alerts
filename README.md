@@ -38,6 +38,7 @@ $ pip install mend-ignore-alerts
 > 
 > Command-line arguments take precedence over environment variables.  
 
+
 | CLI argument                 | Env. Variable     |   Type   | Required | Description                                                                                                       |
 |:-----------------------------|:------------------|:--------:|:--------:|:------------------------------------------------------------------------------------------------------------------|
 | **&#x2011;&#x2011;help**     |                   | `switch` |    No    | Show help and exit                                                                                                |
@@ -52,7 +53,6 @@ $ pip install mend-ignore-alerts
 | **&#x2011;&#x2011;ghpat**    | `WS_GHPAT`        | `string` |    No    | GitHub PAT                                                                                                        |
 | **&#x2011;&#x2011;ghowner**  | `WS_GHOWNER`      | `string` |    No    | GitHub Owner                                                                                                      |
 | **&#x2011;&#x2011;ghrepo**   | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                  |
-
 
 ## Usage
 **Using command-line arguments only:**
