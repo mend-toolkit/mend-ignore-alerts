@@ -159,7 +159,7 @@ def get_project_list():
         data_prj = json.dumps(
             {"requestType": "getOrganizationProjectVitals",
              "userKey": args.ws_user_key,
-             "orgToken": args.apikey,
+             "orgToken": args.ws_token,
              })
         try:
             prj_data = json.loads(call_ws_api(data=data_prj))["projectVitals"]
