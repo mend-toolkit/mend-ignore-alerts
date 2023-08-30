@@ -67,7 +67,7 @@ jobs:
             if [[ $(echo "$latestVer" | cut -d. -f1,2) == $(date +"%y.%-m") ]] ; then
               nextVersion="$(date +"%y.%-m").$(( $(echo "$latestVer" | sed 's/.*\.//') + 1 ))"
             else
-              nextVersion="$(date +"%y.%-m.1")"
+              nextVersion="$(date +"%y.%-m.1.1")"
             fi
             if [[ "$GITHUB_REF" == *"/staging" ]]; then
               pkgVersion="${nextVersion}rc$(date +"%Y%m%d%H%M")"
@@ -268,7 +268,7 @@ jobs:
         id: publish_to_test_pypi
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          skip-existing: false
+          skip-existing: true
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           packages-dir: dist/${{ needs.build-and-test.outputs.min_py_ver }}
