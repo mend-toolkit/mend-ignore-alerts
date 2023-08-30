@@ -49,7 +49,7 @@ $ pip install mend-ignore-alerts
 | **&#x2011;&#x2011;mode**     | `WS_MODE`         | `string` |   Yes    | `create` or `load` value                                                                                          |
 | **&#x2011;&#x2011;product**  | `WS_PRODUCTTOKEN` | string  |    No    | Empty String <br />(Include all products) | Comma-separated list of Mend Product Tokens that should be included |
 | **&#x2011;&#x2011;scope**    | `WS_PROJECTTOKEN` | string  |    No    | Empty String <br />(Include all projects) | Comma-separated list of Mend Project Tokens that should be included                                               |
-| **&#x2011;&#x2011;exclude**  | `WS_EXCLUDETOKEN` | string  |    No    | Empty String <br /> (No exclusions) | Comma-separated list of Mend Project Tokens that should be excluded          |
+| **&#x2011;&#x2011;exclude**  | `WS_EXCLUDETOKEN` | string  |    No    | Empty String <br /> (No exclusions) | Comma-separated list of Mend Project Tokens that should be excluded                                           |
 | **&#x2011;&#x2011;ghpat**    | `WS_GHPAT`        | `string` |    No    | GitHub PAT                                                                                                        |
 | **&#x2011;&#x2011;ghowner**  | `WS_GHOWNER`      | `string` |    No    | GitHub Owner                                                                                                      |
 | **&#x2011;&#x2011;ghrepo**   | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                  |
