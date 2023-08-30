@@ -268,7 +268,7 @@ jobs:
         id: publish_to_test_pypi
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          skip-existing: true
+          skip-existing: false
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           packages-dir: dist/${{ needs.build-and-test.outputs.min_py_ver }}
