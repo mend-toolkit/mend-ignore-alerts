@@ -64,17 +64,17 @@ jobs:
             fi
           else
             latestVer="$(git describe --tags $(git rev-list --tags --max-count=1) | sed -r 's/^[\/a-zA-z-]+//')"
-            matching_tags=($(git tag -l 'test-v*' | sort -V))
-            echo "Matching tags: $matching_tags"
-            # Get the latest matching tag
-            latest_tag=""
-            # Loop through the matching tags to find the latest one
-            for tag in "${matching_tags[@]}"; do
-              if [[ "$tag" > "$latest_tag" ]]; then
-                latest_tag="$tag"
-              fi
+            matching_tags=()
+            # List tags that match the pattern
+            git tag -l 'test-v*' | while read -r tag; do
+            matching_tags+=("$tag")
             done
+            # Sort matching tags in version order
+            IFS=$'\n' sorted_tags=($(sort -V <<<"${matching_tags[*]}"))
+            unset IFS
 
+            # Get the latest matching tag
+            latest_tag="${sorted_tags[-1]}"
             echo "Last ver: $latestVer"
             echo "Last tag: $latest_tag"
             if [[ $latest_tag =~ ^test-v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
