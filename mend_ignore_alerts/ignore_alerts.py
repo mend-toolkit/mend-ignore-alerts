@@ -9,6 +9,7 @@ import sys
 import requests
 import yaml
 from github import Github
+from datetime import datetime, timedelta
 
 from mend_ignore_alerts._version import __version__, __tool_name__, __description__
 from mend_ignore_alerts.const import aliases, varenvs
@@ -39,6 +40,7 @@ short_lst_prj = []
 token_pattern = r"^[0-9a-zA-Z]{64}$"
 uuid_pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 AGENT_INFO = {"agent": f"ps-{__tool_name__.replace('_', '-')}", "agentVersion": APP_VERSION}
+IGNORE_PERIOD = 180
 
 
 def try_or_error(supplier, msg):
@@ -215,17 +217,19 @@ def create_yaml_ignored_alerts(prj_tokens):
         data_yml = []
         for token_ in prj_tokens:
             for key, value in token_.items():
-                alerts = get_ingnored_alerts(key)  # By project token
+                alerts = get_ignored_alerts(key)  # By project token
                 vuln = []
                 if alerts:
                     for alert_ in alerts:
                         for key_, value_ in alert_.items():
-                            vuln.append(
-                                {
-                                    'id_vuln': key_,
-                                    'note': value_,
-                                }
-                            )
+                            for note_, date_ in value_.items():
+                                vuln.append(
+                                    {
+                                        'id_vuln': key_[0],
+                                        'note': note_,
+                                        'end_date': date_
+                                    }
+                                )
                 if vuln:
                     val_arr = value.split(":")
                     data_yml.append({
@@ -274,6 +278,17 @@ def create_waiver():
         yaml.dump(data_yml, file)
 
 
+def reactivate_alert(alert_uuid):
+    data = json.dumps({
+        "requestType": "setAlertsStatus",
+        "orgToken": args.ws_token,
+        "userKey": args.ws_user_key,
+        "alertUuids": [alert_uuid],
+        "status": "Active"
+    })
+    call_ws_api(data=data)
+
+
 def restore_alerts(project):
     ign_alerts = json.dumps({
         "requestType" : "getProjectIgnoredAlerts",
@@ -292,7 +307,7 @@ def restore_alerts(project):
     call_ws_api(data=data)
 
 
-def get_ingnored_alerts(project):
+def get_ignored_alerts(project):
     ign_alerts = json.dumps({
         "requestType" : "getProjectIgnoredAlerts",
         "userKey": args.ws_user_key,
@@ -302,20 +317,23 @@ def get_ingnored_alerts(project):
     try:
         res_ = json.loads(call_ws_api(data=ign_alerts))["alerts"]
         for vuln_ in res_:
-            res.append({
-                vuln_["vulnerability"]["name"]: vuln_["vulnerability"]["description"]
-            })
+            if vuln_["type"] == 'SECURITY_VULNERABILITY':
+                res.append({
+                    (vuln_["vulnerability"]["name"], vuln_["alertUuid"]): {vuln_["vulnerability"]["description"] : vuln_["vulnerability"]["lastUpdated"]}
+                })
     except Exception as err:
         pass
     return res
 
 
 def is_vuln_in_ignored(vulnerability, ign_list):
-    for ign_ in ign_list:
-        for key, value in ign_.items():
-            if vulnerability.strip() == key:
-                return True, value
-    return False, ""
+    if vulnerability:
+        for ign_ in ign_list:
+            for key, value in ign_.items():
+                if vulnerability.strip() == key[1] or vulnerability.strip() == key[0]:
+                    for note_, date_ in value.items():
+                        return True, note_, key[1]
+    return False, "",""
 
 
 def read_yaml(yml_file):
@@ -351,6 +369,18 @@ def get_alerts_by_type(prj_token, alert_type):
         return []
 
 
+def get_all_alerts_by_project(prj_token):
+    try:
+        data = json.dumps({
+            "requestType": "getProjectAlerts",
+            "userKey": args.ws_user_key,
+            "projectToken": prj_token,
+        })
+        return json.loads(call_ws_api(data=data))["alerts"]
+    except:
+        return []
+
+
 def set_ignore_alert(alert_uuid, comment):
     try:
         data = json.dumps({
@@ -365,32 +395,61 @@ def set_ignore_alert(alert_uuid, comment):
         return f"Failed Ignore operation for alert UUID {alert_uuid}"
 
 
+def get_alert_uuid(vulnid, alerts):
+    for alert_ in alerts:
+        if alert_["vulnerability"]["name"] == vulnid and "SNYK" not in vulnid:
+            return alert_["alertUuid"]
+    return ""
+
+
 def exec_input_yaml(input_data):
     input_data_ = [input_data] if type(input_data) is dict else input_data
     for el_ in input_data_:
         prj_token = get_token_by_prj_name(prj_name=try_or_error(lambda: el_["name"], try_or_error(lambda: el_["projectname"], "")), prd_name=try_or_error(lambda : el_["productname"], ""))
         if prj_token:
             #restore_alerts(project=prj_token)
-            ignored_al = get_ingnored_alerts(project=prj_token)
+            ignored_al = get_ignored_alerts(project=prj_token)
             alerts = get_alerts_by_type(prj_token=prj_token, alert_type="SECURITY_VULNERABILITY")
             try:
                 for data_ in el_["vulns"]:
                     note = data_["note"]
+                    end_date_str = try_or_error(lambda: data_["effective_date"],
+                                            try_or_error(lambda: data_["end_date"], ""))
+                    if end_date_str:
+                        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+                        delta = (datetime.now() - end_date).days
+                    else:
+                        delta = 0
+
                     vuln_id = try_or_error(lambda: data_["vuln_id"], try_or_error(lambda: data_["id_vuln"], ""))
-                    status, note_ign = is_vuln_in_ignored(vulnerability=vuln_id,ign_list=ignored_al)
+                    alert_uuid = get_alert_uuid(vuln_id, alerts)
+                    if alert_uuid:
+                        status, note_ign, fake_alert_uuid = is_vuln_in_ignored(vulnerability=alert_uuid, ign_list=ignored_al)
+                    else:
+                        status, note_ign, alert_uuid = is_vuln_in_ignored(vulnerability=vuln_id, ign_list=ignored_al)
                     if not status:
-                        alert_uuid = ""
-                        for alert_ in alerts:
-                            if alert_["vulnerability"]["name"] == vuln_id and "SNYK" not in vuln_id:
-                                alert_uuid = alert_["alertUuid"]
-                                break
-                        if alert_uuid :
-                            logger.info(set_ignore_alert(alert_uuid=alert_uuid,comment=note))
+                        if alert_uuid:
+                            if delta < IGNORE_PERIOD:
+                                logger.info(set_ignore_alert(alert_uuid=alert_uuid,comment=note))
+                            else:
+                                logger.warning(f"The vulnerability {vuln_id} in the project "
+                                               f"{try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))} "
+                                               f"was not ignored. The vulnerability older than {IGNORE_PERIOD} days")
                         else:
                             logger.info(f"The {vuln_id} was not found in the project {try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))}")
                     else:
-                        logger.warning(f"The vulnerability {vuln_id} in the project {try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))} "
-                                    f"has been ignored already with comment: {note_ign}")
+                        if delta >= IGNORE_PERIOD:
+                            if alert_uuid:
+                                #  reactivate
+                                reactivate_alert(alert_uuid=alert_uuid)
+                                logger.info(f"The {vuln_id} in the project {try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))}"
+                                            f" was reactivated. The vulnerability older than {IGNORE_PERIOD} days")
+                            else:
+                                logger.info(
+                                    f"The {vuln_id} was not found in the project {try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))}")
+                        else:
+                            logger.warning(f"The vulnerability {vuln_id} in the project {try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))} "
+                                        f"has been ignored already with comment: {note_ign}")
             except Exception as err:
                 logger.error(f"Error: {err}")
         else:
@@ -421,7 +480,6 @@ def main():
                 input_data = repo.get_contents(args.yaml).decoded_content.decode("utf-8")
             except Exception as err:
                 logger.error(f"Access to {args.owner}/{args.repo} forbidden")
-        #create_waiver()
         logger.info(f'[{fn()}] Getting project list')
         '''
         load_prj = json.dumps({
