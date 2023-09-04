@@ -11,8 +11,8 @@ on:
       - '!whitesource/**'
     tags:
       - '*'
-  schedule:
-    - cron: '30 13 * * *'
+ # schedule:
+ #   - cron: '30 13 * * *'
 
 jobs:
   build-and-test:
@@ -56,7 +56,8 @@ jobs:
           if [[ ${{ strategy.job-index }} == 0 ]]; then
             echo "MIN_PY_VER=${{ matrix.python-version }}" >> $GITHUB_OUTPUT
           fi
-          
+          echo "GitHub Ref: ${{ github.ref }}"
+          echo "GitHub Ref_1: $GITHUB_REF"
           if [[ "$GITHUB_REF" == *"refs/tags/v"* || "$GITHUB_REF" == *"refs/tags/test-v"* ]]; then
             pkgVersion="$(echo ${{ github.ref }} | sed -r 's/^[\/a-zA-z-]+//')"
             if [[ $pkgVersion != *@(a|b)* ]]; then
