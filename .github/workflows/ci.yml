@@ -63,6 +63,7 @@ jobs:
               pkgRelease=true
             fi
           else
+            echo "get latestver"
             latestVer="$(git describe --tags $(git rev-list --tags --max-count=1) | sed -r 's/^[\/a-zA-z-]+//')"
             echo "Last ver: $latestVer"
            
