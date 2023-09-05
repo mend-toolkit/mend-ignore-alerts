@@ -36,7 +36,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
+      - name: List Tags
+        run: git tag -l
       - name: Set Environment Variables
         id: set_env_vars
         env:
