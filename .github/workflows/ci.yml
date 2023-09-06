@@ -38,8 +38,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: List Tags
         run: |
-          #git fetch --tags
-          git tag -l
+          git fetch --tags
+          #git tag -l
       - name: Set Environment Variables
         id: set_env_vars
         env:
