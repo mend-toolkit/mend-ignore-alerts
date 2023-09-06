@@ -351,7 +351,7 @@ def get_token_by_prj_name(prj_name, prd_name):
                     return key
                 else:
                     logger.info(f"The product is not defined in the input file; "
-                                f"the project was found just by project name {prj_name}")
+                                f"the project was found just by project name {prj_name} in the {val_arr[0]} product")
                     return key
     return ""
 
