@@ -51,7 +51,7 @@ jobs:
             fi
           fi
       
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Get Source Branch
         id: get_source_branch
         run: |
