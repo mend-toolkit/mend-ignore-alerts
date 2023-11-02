@@ -39,7 +39,7 @@ jobs:
       - name: List Tags
         run: |
           git fetch --tags
-          git tag -l
+          #git tag -l
       - name: Set Environment Variables
         id: set_env_vars
         env:
