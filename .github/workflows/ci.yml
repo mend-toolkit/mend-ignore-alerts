@@ -73,7 +73,7 @@ jobs:
             if [[ $(echo "$latestVer" | cut -d. -f1,2) == $(date +"%y.%-m") ]] ; then
               nextVersion="$(date +"%y.%-m").$(( $(echo "$latestVer" | sed 's/.*\.//') + 1 ))"
             else
-              nextVersion="$(date +"%y.%-m.1.2")"
+              nextVersion="$(date +"%y.%-m.1.3")"
             fi
             if [[ "$GITHUB_REF" == *"/staging" ]]; then
               pkgVersion="${nextVersion}rc$(date +"%Y%m%d%H%M")"
