@@ -9,7 +9,7 @@ import sys
 import requests
 import yaml
 from github import Github
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from mend_ignore_alerts._version import __version__, __tool_name__, __description__
 from mend_ignore_alerts.const import aliases, varenvs
