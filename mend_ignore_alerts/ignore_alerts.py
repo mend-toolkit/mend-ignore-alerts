@@ -476,6 +476,7 @@ def main():
                 logger.error(f"Access to {args.owner}/{args.repo} forbidden")
         logger.info(f'[{fn()}] Getting project list')
         short_lst_prj = get_project_list()
+        print(short_lst_prj)
         if args.mode.lower() == "create":
             logger.info(create_yaml_ignored_alerts(short_lst_prj))
         elif args.yaml:
