@@ -15,6 +15,7 @@ class aliases(Enum): # List of aliases for params
     githubrepo = ("--ghrepo", "-ghrepo")
     output = ("--out", "-out")
     mode = ("--mode", "-mode")
+    prjname = ("--prjname", "--projectname")
 
     @classmethod
     def get_aliases_str(cls, key):

@@ -118,6 +118,8 @@ def parse_args():
                         default=varenvs.get_env("wsmode"), required=not varenvs.get_env("wsmode"))
     parser.add_argument(*aliases.get_aliases_str("yaml"), help="Output or input YAML file", dest='yaml',
                         default=varenvs.get_env("yaml"))
+    parser.add_argument(*aliases.get_aliases_str("prjname"), help="Project name in YAML file", dest='prjname',
+                        default='')
     parser.add_argument(*aliases.get_aliases_str("githubpat"), help="GitHub PAT", dest='pat',
                         default=varenvs.get_env("githubpat"))
     parser.add_argument(*aliases.get_aliases_str("githubrepo"), help="GitHub Repo", dest='repo',
@@ -143,8 +145,6 @@ def get_project_list():
     res = []
     if args.projecttoken:
         res.extend([{x: get_prj_name(x)} for x in args.projecttoken.split(",")])
-    print(varenvs.get_env("wsproduct"))
-    print(f"Project: {args.projecttoken}. Product: {args.producttoken}. {res}")
     if args.producttoken:
         products = args.producttoken.split(",")
         for product_ in products:
@@ -169,7 +169,6 @@ def get_project_list():
             res.extend([{x["token"]: get_prj_name(x["token"])} for x in prj_data])  # x["name"]
         except:
             pass
-    print(f"Project: {args.projecttoken}. Product: {args.producttoken}. {res}")
 
     exclude_tokens = []
     if args.exclude:
@@ -236,7 +235,7 @@ def create_yaml_ignored_alerts(prj_tokens):
                     val_arr = value.split(":")
                     data_yml.append({
                         'productname': val_arr[0],  # Product Name
-                        'projectname': val_arr[1],  # Project Name
+                        'projectname': val_arr[1] if not args.prjname else args.prjname,  # Project Name
                         'vulns': vuln
                     })
         with open(f'{args.yaml}', 'w') as file:
@@ -478,7 +477,6 @@ def main():
                 logger.error(f"Access to {args.owner}/{args.repo} forbidden")
         logger.info(f'[{fn()}] Getting project list')
         short_lst_prj = get_project_list()
-        print(short_lst_prj)
         if args.mode.lower() == "create":
             logger.info(create_yaml_ignored_alerts(short_lst_prj))
         elif args.yaml:
