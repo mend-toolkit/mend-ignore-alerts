@@ -143,7 +143,8 @@ def get_project_list():
     res = []
     if args.projecttoken:
         res.extend([{x: get_prj_name(x)} for x in args.projecttoken.split(",")])
-
+    print(varenvs.get_env("wsproduct"))
+    print(f"Project: {args.projecttoken}. Product: {args.producttoken}. {res}")
     if args.producttoken:
         products = args.producttoken.split(",")
         for product_ in products:
@@ -168,6 +169,7 @@ def get_project_list():
             res.extend([{x["token"]: get_prj_name(x["token"])} for x in prj_data])  # x["name"]
         except:
             pass
+    print(f"Project: {args.projecttoken}. Product: {args.producttoken}. {res}")
 
     exclude_tokens = []
     if args.exclude:
