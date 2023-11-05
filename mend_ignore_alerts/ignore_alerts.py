@@ -322,6 +322,11 @@ def get_ignored_alerts(project):
                 res.append({
                     (vuln_["vulnerability"]["name"], vuln_["alertUuid"]): {vuln_["vulnerability"]["description"] : vuln_["vulnerability"]["lastUpdated"]}
                 })
+            elif vuln_["type"] == 'REJECTED_BY_POLICY_RESOURCE':
+                res.append({
+                    (f'{vuln_["description"]}-{vuln_["library"]["artifactId"]}', vuln_["alertUuid"]): {vuln_["comments"] : vuln_["modifiedDate"]}
+                })
+
     except Exception as err:
         pass
     return res
@@ -411,6 +416,7 @@ def exec_input_yaml(input_data):
             #restore_alerts(project=prj_token)
             ignored_al = get_ignored_alerts(project=prj_token)
             alerts = get_alerts_by_type(prj_token=prj_token, alert_type="SECURITY_VULNERABILITY")
+            alerts.extend(get_alerts_by_type(prj_token=prj_token, alert_type="REJECTED_BY_POLICY_RESOURCE"))
             try:
                 for data_ in el_["vulns"]:
                     note = data_["note"]
@@ -438,7 +444,7 @@ def exec_input_yaml(input_data):
                                                 f"has been ignored already with comment: {key_}")
 
                     for alert_ in alerts:
-                        if alert_["vulnerability"]["name"] == vuln_id and "SNYK" not in vuln_id:
+                        if try_or_error(lambda: alert_["vulnerability"]["name"], f'{alert_["description"]}-{alert_["library"]["artifactId"]}') == vuln_id and "SNYK" not in vuln_id:
                             if delta < IGNORE_PERIOD:
                                 logger.info(set_ignore_alert(alert_uuid=alert_["alertUuid"],comment=note, vuln=vuln_id))
                             else:
