@@ -50,6 +50,12 @@ def try_or_error(supplier, msg):
         return msg
 
 
+def print_header(hdr_txt: str):
+    hdr_txt = ' {0} '.format(hdr_txt)
+    hdr = '\n{0}\n{1}\n{0}'.format(('=' * len(hdr_txt)), hdr_txt)
+    print(hdr)
+
+
 def fn():
     fn_stack = inspect.stack()[1]
     return f'{fn_stack.function}:{fn_stack.lineno}'
@@ -84,6 +90,10 @@ def check_patterns():
             if not (re.match(uuid_pattern, excl_) or re.match(token_pattern, excl_)):
                 res.append("MEND_EXCLUDETOKEN")
                 break
+    if args.baseline_project_token:
+        if not (re.match(uuid_pattern, args.baseline_project_token) or re.match(token_pattern, args.baseline_project_token)):
+            res.append("Baseline Project Token")
+
     return res
 
 
@@ -108,18 +118,23 @@ def parse_args():
                         default=varenvs.get_env("wsapikey"), required=not varenvs.get_env("wsapikey"))
     parser.add_argument(*aliases.get_aliases_str("url"), help="Mend server URL", dest='ws_url',
                         default=varenvs.get_env("wsurl"), required=not varenvs.get_env("wsurl"))
+    parser.add_argument(*aliases.get_aliases_str("baseline"), help='Mend Baseline project token', dest='baseline_project_token',
+                        required=False)
+    parser.add_argument(*aliases.get_aliases_str("destprjname"), help='Mend Destination Project Name', dest='dest_project_name',
+                        required=False)
+    parser.add_argument(*aliases.get_aliases_str("destprjver"), help='Mend Destination Project Version',
+                        dest='dest_project_version', required=False)
+    parser.add_argument(*aliases.get_aliases_str("whitelist"), help='CVE white list file', dest='whitelist', required=False)
     parser.add_argument(*aliases.get_aliases_str("productkey"), help="Mend product scope", dest='producttoken',
                         default=varenvs.get_env("wsproduct"))
     parser.add_argument(*aliases.get_aliases_str("projectkey"), help="Mend project scope", dest='projecttoken',
                         default=varenvs.get_env("wsproject"))
     parser.add_argument(*aliases.get_aliases_str("exclude"), help="Exclude Mend project/product scope", dest='exclude',
                         default=varenvs.get_env("wsexclude"))
-    parser.add_argument(*aliases.get_aliases_str("mode"), help="Creation YAML file or loading", dest='mode',
-                        default=varenvs.get_env("wsmode"), required=not varenvs.get_env("wsmode"))
+    parser.add_argument(*aliases.get_aliases_str("mode"), help="Creation or loading YAML file ", dest='mode',
+                        default=varenvs.get_env("wsmode"), required=False)
     parser.add_argument(*aliases.get_aliases_str("yaml"), help="Output or input YAML file", dest='yaml',
                         default=varenvs.get_env("yaml"))
-    parser.add_argument(*aliases.get_aliases_str("prjname"), help="Project name in YAML file", dest='prjname',
-                        default='')
     parser.add_argument(*aliases.get_aliases_str("githubpat"), help="GitHub PAT", dest='pat',
                         default=varenvs.get_env("githubpat"))
     parser.add_argument(*aliases.get_aliases_str("githubrepo"), help="GitHub Repo", dest='repo',
@@ -213,7 +228,7 @@ def call_ws_api(data, header={"Content-Type": "application/json"}, method="POST"
     return res
 
 
-def create_yaml_ignored_alerts(prj_tokens):
+def create_yaml_ignored_alerts(prj_tokens, project_name):
     try:
         data_yml = []
         for token_ in prj_tokens:
@@ -235,7 +250,7 @@ def create_yaml_ignored_alerts(prj_tokens):
                     val_arr = value.split(":")
                     data_yml.append({
                         'productname': val_arr[0],  # Product Name
-                        'projectname': val_arr[1] if not args.prjname else args.prjname,  # Project Name
+                        'projectname': val_arr[1] if not project_name else project_name,  # Project Name
                         'vulns': vuln
                     })
         with open(f'{args.yaml}', 'w') as file:
@@ -308,6 +323,41 @@ def restore_alerts(project):
     call_ws_api(data=data)
 
 
+def get_alerts(project):
+    alerts_by_policy = json.dumps({
+        "requestType" : "getProjectAlertsByType",
+        "userKey": args.ws_user_key,
+        "projectToken" : project,
+        "alertType": "REJECTED_BY_POLICY_RESOURCE",
+    })
+    res = []
+    try:
+        res_ = json.loads(call_ws_api(data=alerts_by_policy))["alerts"]
+        for alert_ in res_:
+            res.append({
+                f'{alert_["description"]}-{alert_["library"]["artifactId"]}': alert_["alertUuid"]
+            })
+    except:
+        pass
+
+    alerts_by_vuln = json.dumps({
+        "requestType" : "getProjectAlertsByType",
+        "userKey": args.ws_user_key,
+        "projectToken" : project,
+        "alertType": "SECURITY_VULNERABILITY",
+    })
+    try:
+        res_ = json.loads(call_ws_api(data=alerts_by_vuln))["alerts"]
+        for alert_ in res_:
+            res.append({
+                alert_["vulnerability"]["name"]: alert_["alertUuid"]
+            })
+    except:
+        pass
+
+    return res
+
+
 def get_ignored_alerts(project):
     ign_alerts = json.dumps({
         "requestType" : "getProjectIgnoredAlerts",
@@ -326,7 +376,6 @@ def get_ignored_alerts(project):
                 res.append({
                     (f'{vuln_["description"]}-{vuln_["library"]["artifactId"]}', vuln_["alertUuid"]): {vuln_["comments"] : vuln_["modifiedDate"]}
                 })
-
     except Exception as err:
         pass
     return res
@@ -450,11 +499,42 @@ def exec_input_yaml(input_data):
                             else:
                                 logger.warning(f"The alert {alert_['alertUuid']} (vulnerability {vuln_id}) in the project "
                                                f"{try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))} "
-                                               f"was not ignored")
+                                               f"was not ignored. The end date has passed")
             except Exception as err:
                 logger.error(f"Error: {err}")
         else:
             logger.warning(f"The project {try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))} was not identified")
+
+
+def get_prj_token_by_product_org(parent_token, dest_prj_name):
+    if parent_token:
+        data_prj = json.dumps(
+            {"requestType": "getProductProjectVitals",
+             "userKey": args.ws_user_key,
+             "productToken": parent_token,
+             })
+    else:
+        data_prj = json.dumps(
+            {"requestType": "getOrganizationProjectVitals",
+             "userKey": args.ws_user_key,
+             "orgToken": args.ws_token,
+             })
+    try:
+        prj_data = json.loads(call_ws_api(data=data_prj))["projectVitals"]
+        match_prjs = []
+        for prj_ in prj_data:
+            if dest_prj_name == prj_["name"]:
+                match_prjs.append(prj_["token"])
+        if len(match_prjs) == 1:
+            return match_prjs[0]
+        elif len(match_prjs) == 0:
+            logger.error(f"Project {dest_prj_name} hasn't been found in this product. "
+                                     f"Please check the provided destination project name and try again")
+        else:
+            logger.error(f"There are more than one project with the same name {dest_prj_name}")
+    except Exception as err:
+        logger.error(f"The error was raised during getting data. Details: {err}")
+    exit(-1)
 
 
 def main():
@@ -482,16 +562,53 @@ def main():
             except Exception as err:
                 logger.error(f"Access to {args.owner}/{args.repo} forbidden")
         logger.info(f'[{fn()}] Getting project list')
-        short_lst_prj = get_project_list()
-        if args.mode.lower() == "create":
-            logger.info(create_yaml_ignored_alerts(short_lst_prj))
-        elif args.yaml:
-            try:
-                input_data = yaml.safe_load(input_data) if input_data else read_yaml(args.yaml)
-                exec_input_yaml(input_data=input_data)
-            except Exception as err:
-                logger.error(f"[{fn()}] Impossible to parse file {args.yaml}. Details: {err}")
-        logger.info(f'[{fn()}] Operation was finished successfully')
+
+        config_dest_project_name = f"{args.dest_project_name} - {args.dest_project_version}" if args.dest_project_version else args.dest_project_name
+
+        if args.baseline_project_token:  # Not creation or uploading YAML file. Just copyt ignored alerts from baseline
+            config_baseline_project_token = args.baseline_project_token
+            if config_dest_project_name:
+                try:
+                    dest_project_token = args.projecttoken.split(",")[0] if args.projecttoken else\
+                        get_prj_token_by_product_org(parent_token=args.producttoken.split(",")[0]
+                        if args.producttoken else "", dest_prj_name=config_dest_project_name)
+
+                except Exception as err:
+                    logging.exception(err)
+                    exit(1)
+                source_ignored_alerts = get_ignored_alerts(config_baseline_project_token)
+                dest_alerts = get_alerts(dest_project_token)
+                common_keys = {key[0] for item in source_ignored_alerts for key in item.keys()}
+                ignore_alerts_uuid = [d[key] for d in dest_alerts for key in common_keys if key in d]
+                if ignore_alerts_uuid:
+                    print_header('Ignore alerts in the destination project')
+                    try:
+                        data_ignore = json.dumps({
+                            "requestType": "ignoreAlerts",
+                            "orgToken": args.ws_token,
+                            "userKey": args.ws_user_key,
+                            "alertUuids": ignore_alerts_uuid,
+                            "comments": "Automatically ignored by Mend utility"
+                        })
+                        logger.info(f"{json.loads(call_ws_api(data=data_ignore))['message']}")
+                    except Exception as err:
+                        logger.error(f"Ignoring alerts process failed. Details: {err}")
+                else:
+                    logger.info("Nothing to ignore")
+        else:
+            short_lst_prj = get_project_list()
+            if args.mode.lower() == "create":
+                logger.info(create_yaml_ignored_alerts(short_lst_prj, config_dest_project_name))
+            elif args.yaml and args.mode.lower() == "load":
+                try:
+                    input_data = yaml.safe_load(input_data) if input_data else read_yaml(args.yaml)
+                    exec_input_yaml(input_data=input_data)
+                except Exception as err:
+                    logger.error(f"[{fn()}] Impossible to parse file {args.yaml}. Details: {err}")
+            else:
+                logger.warning(f'[{fn()}] The mode parameter is not correct, or the Input YAML file name is not provided')
+                exit(-1)
+            logger.info(f'[{fn()}] Operation was finished successfully')
     except Exception as err:
         logger.error(f'[{fn()}] Failed to getting project list. Details: {err}')
         exit(-1)
