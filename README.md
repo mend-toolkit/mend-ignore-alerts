@@ -59,6 +59,20 @@ $ pip install mend-ignore-alerts
 `* Note`:
 
 `The tool will create or load data using the input YAML file if a baseline project token is not provided. In case a baseline project token is provided it will be used to ignore alerts by this template (the YAML file would not used).`
+
+## Input/Output YAML example
+```yaml
+- productname: Some Product Name  # Product Name  
+  projectname: Some Project Name  # Project Name
+  vulns:
+  - end_date: 'YYYY-MM-DD'  # If the date passed, the alert related to CVE below (id_vuln) will not be ignored. 
+                            # In other case if this CVE was ignored before then it will be reactivated.   
+    id_vuln: CVE-XXXX-XXXXXXX  # The identification of a vulnerability
+    note: 'Some alert note'  # The note is using as a comment for ignoring the process 
+  - end_date: 'YYYY-MM-DD'
+    id_vuln: CVE-XXXX-XXXXXXX
+    note: 'Alert comment'
+```
 ## Usage
 **Using command-line arguments only (create YAML file):**
 ```shell
