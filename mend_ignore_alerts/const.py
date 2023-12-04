@@ -3,11 +3,11 @@ import os
 
 
 class aliases(Enum): # List of aliases for params
-    apikey = ("--apiKey","--api-key", "--orgToken")
-    userkey = ("--user-key", "--userKey")
-    url = ("--url", "--mendUrl")
-    projectkey = ("--scope", "--projectToken")
-    productkey = ("--productToken", "--product")
+    apikey = ("--apiKey","--api-key", "--orgToken", "-o")
+    userkey = ("--user-key", "--userKey","-k")
+    url = ("--url", "--mendUrl", "-u")
+    projectkey = ("--scope", "--projectToken", "-t")
+    productkey = ("--productToken", "--product", "-d")
     exclude = ("--exclude", "-exclude")
     yaml = ("--yaml", "-yaml")
     githubpat = ("--ghpat", "-ghpat")
@@ -16,6 +16,11 @@ class aliases(Enum): # List of aliases for params
     output = ("--out", "-out")
     mode = ("--mode", "-mode")
     prjname = ("--prjname", "--projectname")
+    baseline = ("-b", "--baselineProjectToken")
+    destprjname = ("-n", "--destProjectName")
+    destprjver = ("-v", "--destProjectVersion")
+    whitelist = ("-w", "--whitelist")
+
 
     @classmethod
     def get_aliases_str(cls, key):

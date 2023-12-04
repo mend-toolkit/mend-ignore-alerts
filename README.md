@@ -39,25 +39,34 @@ $ pip install mend-ignore-alerts
 > Command-line arguments take precedence over environment variables.  
 
 
-| CLI argument                 | Env. Variable     |   Type   | Required | Description                                                                                                       |
-|:-----------------------------|:------------------|:--------:|:--------:|:------------------------------------------------------------------------------------------------------------------|
-| **&#x2011;&#x2011;help**     |                   | `switch` |    No    | Show help and exit                                                                                                |
-| **&#x2011;&#x2011;user-key** | `WS_USERKEY`      | `string` |   Yes    | Mend User Key                                                                                                     |
-| **&#x2011;&#x2011;api-key**  | `WS_APIKEY`       | `string` |   Yes    | Mend API Key                                                                                                      |
-| **&#x2011;&#x2011;url**      | `WS_URL`          | `string` |   Yes    | Mend Server URL                                                                                                   |
-| **&#x2011;&#x2011;yaml**     | `WS_YAML`         | `string` |   Yes    | Yaml file's name for parsing in case `mode` is equal `load`. If `mode` is `create` then Yaml file will be created |
-| **&#x2011;&#x2011;mode**     | `WS_MODE`         | `string` |   Yes    | `create` or `load` value                                                                                          |
-| **&#x2011;&#x2011;product**  | `WS_PRODUCTTOKEN` | string  |    No    | Empty String <br />(Include all products) | Comma-separated list of Mend Product Tokens that should be included |
-| **&#x2011;&#x2011;scope**    | `WS_PROJECTTOKEN` | string  |    No    | Empty String <br />(Include all projects) | Comma-separated list of Mend Project Tokens that should be included                                               |
-| **&#x2011;&#x2011;exclude**  | `WS_EXCLUDETOKEN` | string  |    No    | Empty String <br /> (No exclusions) | Comma-separated list of Mend Project Tokens that should be excluded                                           |
-| **&#x2011;&#x2011;ghpat**    | `WS_GHPAT`        | `string` |    No    | GitHub PAT                                                                                                        |
-| **&#x2011;&#x2011;ghowner**  | `WS_GHOWNER`      | `string` |    No    | GitHub Owner                                                                                                      |
-| **&#x2011;&#x2011;ghrepo**   | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                  |
+| CLI argument                                        | Env. Variable     |   Type   | Required | Description                                                                                                                                                                                                         |
+|:----------------------------------------------------|:------------------|:--------:|:--------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **&#x2011;&#x2011;help**                            |                   | `switch` |    No    | Show help and exit                                                                                                                                                                                                  |
+| **&#x2011;&#x2011;user-key, &#x2011;k**             | `WS_USERKEY`      | `string` |   Yes    | Mend User Key                                                                                                                                                                                                       |
+| **&#x2011;&#x2011;api-key, &#x2011;o**              | `WS_APIKEY`       | `string` |   Yes    | Mend API Key                                                                                                                                                                                                        |
+| **&#x2011;&#x2011;url, &#x2011;u**                  | `WS_URL`          | `string` |   Yes    | Mend Server URL                                                                                                                                                                                                     |
+| **&#x2011;&#x2011;yaml**                            | `WS_YAML`         | `string` |    No    | Yaml file's name for parsing in case `mode` is equal `load`. If `mode` is `create` then Yaml file will be created                                                                                                   |
+| **&#x2011;&#x2011;baselineProjectToken, &#x2011;b** |          | `string` |    No    | Token of the Mend project the ignored alerts are pulled from.                                                                                                                                                       |
+| **&#x2011;&#x2011;destProjectName, &#x2011;n**      |          | `string` |    No    | Name of the Mend project where the alerts will be ignored.                                                                                                                                                          |
+| **&#x2011;&#x2011;destProjectVersion, &#x2011;v**   |          | `string` |    No    | Version of the Mend project where the alerts will be ignored.                                                                                                                                                       |
+| **&#x2011;&#x2011;mode**                            | `WS_MODE`         | `string` |    No    | `create` or `load` value                                                                                                                                                                                            |
+| **&#x2011;&#x2011;product, &#x2011;d**              | `WS_PRODUCTTOKEN` | string  |    No    | Comma-separated list of Mend Product Tokens that should be included. Empty String (Include all products) <br /> Using a baseline project token, the provided product token will be used as the destination product. | 
+| **&#x2011;&#x2011;scope, &#x2011;t**                | `WS_PROJECTTOKEN` | string  |    No    | Comma-separated list of Mend Project Tokens that should be included. Empty String (Include all projects) <br /> Using a baseline project token, the provided project token will be used as the destination project. | 
+| **&#x2011;&#x2011;exclude**                         | `WS_EXCLUDETOKEN` | string  |    No    | Comma-separated list of Mend Project Tokens that should be excluded . Empty String <br /> (No exclusions)                                                                                                           | 
+| **&#x2011;&#x2011;ghpat**                           | `WS_GHPAT`        | `string` |    No    | GitHub PAT                                                                                                                                                                                                          |
+| **&#x2011;&#x2011;ghowner**                         | `WS_GHOWNER`      | `string` |    No    | GitHub Owner                                                                                                                                                                                                        |
+| **&#x2011;&#x2011;ghrepo**                          | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                                                                                                                    |
+`* Note`:
 
+`The tool will create or load data using the input YAML file if a baseline project token is not provided. In case a baseline project token is provided it will be used to ignore alerts by this template (the YAML file would not used).`
 ## Usage
-**Using command-line arguments only:**
+**Using command-line arguments only (create YAML file):**
 ```shell
 ignore_alerts --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --yaml $WS_YAML --mode create --product xxxxx
+```
+**Using command-line arguments only (use baseline project):**
+```shell
+ignore_alerts --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL -b xxxxxx -n ProjectName -v ProjectVersion
 ```
 **Using environment variables:**
 ```shell
