@@ -53,13 +53,35 @@ $ pip install mend-ignore-alerts
 | **&#x2011;&#x2011;product, &#x2011;d**              | `WS_PRODUCTTOKEN` | string  |    No    | Comma-separated list of Mend Product Tokens that should be included. Empty String (Include all products) <br /> Using a baseline project token, the provided product token will be used as the destination product. | 
 | **&#x2011;&#x2011;scope, &#x2011;t**                | `WS_PROJECTTOKEN` | string  |    No    | Comma-separated list of Mend Project Tokens that should be included. Empty String (Include all projects) <br /> Using a baseline project token, the provided project token will be used as the destination project. | 
 | **&#x2011;&#x2011;exclude**                         | `WS_EXCLUDETOKEN` | string  |    No    | Comma-separated list of Mend Project Tokens that should be excluded . Empty String <br /> (No exclusions)                                                                                                           | 
+| **&#x2011;&#x2011;comment**                         |       | `string` |    No    | The default comment for ignoring process. If the parameter is not set then standard note “Automatically Ignored by Mend Utility” will be used                                                                       |
 | **&#x2011;&#x2011;ghpat**                           | `WS_GHPAT`        | `string` |    No    | GitHub PAT                                                                                                                                                                                                          |
 | **&#x2011;&#x2011;ghowner**                         | `WS_GHOWNER`      | `string` |    No    | GitHub Owner                                                                                                                                                                                                        |
 | **&#x2011;&#x2011;ghrepo**                          | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                                                                                                                    |
 `* Note`:
 
-`The tool will create or load data using the input YAML file if a baseline project token is not provided. In case a baseline project token is provided it will be used to ignore alerts by this template (the YAML file would not used).`
+`The tool will create or load data using the input YAML file if a baseline project token is not provided. In case a baseline project token is provided it will be used to ignore alerts by this template (the YAML file would not used).
 
+WS_PROJECTTOKEN/--scope used for creating YAML file or as destination project token in case baseline project token provided.`
+## The Config file example
+```ini
+[DEFAULT]
+wsUrl=
+userKey=
+orgToken=
+baselineProjectToken=
+destProjectName=
+destProjectVersion=
+destProjectToken=  # This parameter associated with WS_PROJECTTOKEN (--product)
+destProductToken=  # This parameter associated with WS_PRODUCTTOKEN (--scope)
+whitelist=
+mode=
+yaml=
+excludeTokens=
+comment=  # The default comment for ignoring alerts process
+GHPat=
+GHRepo=
+GHOwner=
+```
 ## Input/Output YAML example
 ```yaml
 - productname: Some Product Name  # Product Name  
@@ -77,6 +99,11 @@ $ pip install mend-ignore-alerts
 **Using command-line arguments only (create YAML file):**
 ```shell
 ignore_alerts --user-key WS_USERKEY --api-key WS_APIKEY --url $WS_WSS_URL --yaml $WS_YAML --mode create --product xxxxx
+```
+> **Note:** In the following example, $WS_USERKEY, $WS_APIKEY, $WS_URL and $WS_MODE are assumed to have been exported as environment variables.  
+
+```shell
+$ ignore_alerts --yaml whaiverexample.yml --scope xxxxxxx,yyyyyyy --product zzzzzzzzz
 ```
 **Using command-line arguments only (use baseline project):**
 ```shell
@@ -140,18 +167,4 @@ jobs:
           ignore_alerts --url $WS_URL --yaml $YAML --apiKey $WS_APIKEY --user-key $USER_KEY --mode load
 ```
 
-The YAML file should be placed in the Repo folder on GitHub 
-
-## Execution Examples
-
-> **Note:** In the following examples, $WS_USERKEY, $WS_APIKEY, $WS_URL and $WS_MODE are assumed to have been exported as environment variables.  
-
-```shell
-$ ignore_alerts --yaml whaiverexample.yml --scope xxxxxxx,yyyyyyy --product zzzzzzzzz
-```
-
-Usind examplewaiver.yml file from some Repo
-
-```shell
-$ ignore_alerts --yaml whaiverexample.yml --ghpat xxxxxxx --ghowner Owner --ghrepo RepoName --product xxxxxxx,yyyyyyyyyy --exclude zzzzzzzzzz 
-```
+The YAML file should be placed in the Repo folder on GitHub

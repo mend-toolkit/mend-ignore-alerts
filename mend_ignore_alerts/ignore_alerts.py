@@ -10,6 +10,8 @@ import requests
 import yaml
 from github import Github
 from datetime import datetime
+from configparser import ConfigParser
+from dataclasses import dataclass
 
 from mend_ignore_alerts._version import __version__, __tool_name__, __description__
 from mend_ignore_alerts.const import aliases, varenvs
@@ -97,6 +99,17 @@ def check_patterns():
     return res
 
 
+def check_parameters():
+    res = []
+    if args.baseline_project_token and not (args.dest_project_name or args.projecttoken):
+        res.append("A Baseline Project Token was provided, but the destination project Name or Token was not set")
+
+    if not args.baseline_project_token and not (args.mode or args.yaml):
+        res.append("A Baseline Project Token was not provided, but the YAML file and Mode parameter were not set")
+
+    return res
+
+
 def log_obj_props(obj, obj_title=""):
     masked_props = ["ws_user_key", "user_key"]
     prop_list = [obj_title] if obj_title else []
@@ -111,39 +124,97 @@ def log_obj_props(obj, obj_title=""):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description=__description__)
-    parser.add_argument(*aliases.get_aliases_str("userkey"), help="Mend user key", dest='ws_user_key',
-                        default=varenvs.get_env("wsuserkey"), required=not varenvs.get_env("wsuserkey"))
-    parser.add_argument(*aliases.get_aliases_str("apikey"), help="Mend API key", dest='ws_token',
-                        default=varenvs.get_env("wsapikey"), required=not varenvs.get_env("wsapikey"))
-    parser.add_argument(*aliases.get_aliases_str("url"), help="Mend server URL", dest='ws_url',
-                        default=varenvs.get_env("wsurl"), required=not varenvs.get_env("wsurl"))
-    parser.add_argument(*aliases.get_aliases_str("baseline"), help='Mend Baseline project token', dest='baseline_project_token',
-                        required=False)
-    parser.add_argument(*aliases.get_aliases_str("destprjname"), help='Mend Destination Project Name', dest='dest_project_name',
-                        required=False)
-    parser.add_argument(*aliases.get_aliases_str("destprjver"), help='Mend Destination Project Version',
-                        dest='dest_project_version', required=False)
-    parser.add_argument(*aliases.get_aliases_str("whitelist"), help='CVE white list file', dest='whitelist', required=False)
-    parser.add_argument(*aliases.get_aliases_str("productkey"), help="Mend product scope", dest='producttoken',
-                        default=varenvs.get_env("wsproduct"))
-    parser.add_argument(*aliases.get_aliases_str("projectkey"), help="Mend project scope", dest='projecttoken',
-                        default=varenvs.get_env("wsproject"))
-    parser.add_argument(*aliases.get_aliases_str("exclude"), help="Exclude Mend project/product scope", dest='exclude',
-                        default=varenvs.get_env("wsexclude"))
-    parser.add_argument(*aliases.get_aliases_str("mode"), help="Creation or loading YAML file ", dest='mode',
-                        default=varenvs.get_env("wsmode"), required=False)
-    parser.add_argument(*aliases.get_aliases_str("yaml"), help="Output or input YAML file", dest='yaml',
-                        default=varenvs.get_env("yaml"))
-    parser.add_argument(*aliases.get_aliases_str("githubpat"), help="GitHub PAT", dest='pat',
-                        default=varenvs.get_env("githubpat"))
-    parser.add_argument(*aliases.get_aliases_str("githubrepo"), help="GitHub Repo", dest='repo',
-                        default=varenvs.get_env("githubrepo"))
-    parser.add_argument(*aliases.get_aliases_str("githubowner"), help="GitHub Owner", dest='owner',
-                        default=varenvs.get_env("githubowner"))
-    arguments = parser.parse_args()
+    @dataclass
+    class Config:
+        ws_url: str
+        ws_user_key: str
+        ws_token: str
+        baseline_project_token: str
+        dest_project_name: str
+        dest_project_version: str
+        projecttoken: str
+        producttoken: str
+        whitelist: str
+        mode: str
+        yaml: str
+        exclude: str
+        comment: str
+        pat: str
+        repo: str
+        owner: str
 
-    return arguments
+    if len(sys.argv) < 3:
+        maybe_config_file = True
+    if len(sys.argv) == 1:
+        conf_file = "../params.config"
+    elif not sys.argv[1].startswith('-'):
+        conf_file = sys.argv[1]
+    else:
+        maybe_config_file = False
+
+    if maybe_config_file:
+        if os.path.exists(conf_file):
+            logger.info(f"loading configuration from file: {conf_file}")
+            config = ConfigParser()
+            config.optionxform = str
+            config.read(conf_file)
+            conf = Config(
+                ws_url = config.get('DEFAULT', 'wsUrl'),
+                ws_user_key = config.get('DEFAULT', 'userKey'),
+                ws_token = config.get('DEFAULT', 'orgToken'),
+                producttoken = config.get('DEFAULT', 'destProductToken'),
+                baseline_project_token = config.get('DEFAULT', 'baselineProjectToken', fallback=False),
+                dest_project_name = config.get('DEFAULT', 'destProjectName', fallback=False),
+                dest_project_version = config.get('DEFAULT', 'destProjectVersion', fallback=False),
+                projecttoken = config.get('DEFAULT', 'destProjectToken', fallback=False),
+                mode=config.get('DEFAULT', 'mode', fallback=False),
+                yaml=config.get('DEFAULT', 'yaml', fallback=False),
+                exclude=config.get('DEFAULT', 'excludeTokens', fallback=False),
+                whitelist=config.get('DEFAULT', 'whitelist', fallback=False),
+                comment=config.get('DEFAULT', 'comment', fallback=False),
+                pat=config.get('DEFAULT', 'GHPat', fallback=False),
+                repo=config.get('DEFAULT', 'GHRepo', fallback=False),
+                owner=config.get('DEFAULT', 'GHOwner', fallback=False),
+            )
+        else:
+            logger.error(f"The congiguration file {conf_file} does not exist")
+            exit(-1)
+    else:
+        parser = argparse.ArgumentParser(description=__description__)
+        parser.add_argument(*aliases.get_aliases_str("userkey"), help="Mend user key", dest='ws_user_key',
+                            default=varenvs.get_env("wsuserkey"), required=not varenvs.get_env("wsuserkey"))
+        parser.add_argument(*aliases.get_aliases_str("apikey"), help="Mend API key", dest='ws_token',
+                            default=varenvs.get_env("wsapikey"), required=not varenvs.get_env("wsapikey"))
+        parser.add_argument(*aliases.get_aliases_str("url"), help="Mend server URL", dest='ws_url',
+                            default=varenvs.get_env("wsurl"), required=not varenvs.get_env("wsurl"))
+        parser.add_argument(*aliases.get_aliases_str("baseline"), help='Mend Baseline project token', dest='baseline_project_token',
+                            required=False)
+        parser.add_argument(*aliases.get_aliases_str("destprjname"), help='Mend Destination Project Name', dest='dest_project_name',
+                            required=False)
+        parser.add_argument(*aliases.get_aliases_str("destprjver"), help='Mend Destination Project Version',
+                            dest='dest_project_version', required=False)
+        parser.add_argument(*aliases.get_aliases_str("whitelist"), help='CVE white list file', dest='whitelist', default="", required=False)
+        parser.add_argument(*aliases.get_aliases_str("productkey"), help="Mend product scope", dest='producttoken',
+                            default=varenvs.get_env("wsproduct"))
+        parser.add_argument(*aliases.get_aliases_str("projectkey"), help="Mend project scope", dest='projecttoken',
+                            default=varenvs.get_env("wsproject"))
+        parser.add_argument(*aliases.get_aliases_str("exclude"), help="Exclude Mend project/product scope", dest='exclude',
+                            default=varenvs.get_env("wsexclude"))
+        parser.add_argument(*aliases.get_aliases_str("mode"), help="Creation or loading YAML file ", dest='mode',
+                            default=varenvs.get_env("wsmode"), required=False)
+        parser.add_argument(*aliases.get_aliases_str("yaml"), help="Output or input YAML file", dest='yaml',
+                            default=varenvs.get_env("yaml"))
+        parser.add_argument(*aliases.get_aliases_str("comment"), help="The default comment for ignoring ", dest='comment',
+                            default="")
+        parser.add_argument(*aliases.get_aliases_str("githubpat"), help="GitHub PAT", dest='pat',
+                            default=varenvs.get_env("githubpat"))
+        parser.add_argument(*aliases.get_aliases_str("githubrepo"), help="GitHub Repo", dest='repo',
+                            default=varenvs.get_env("githubrepo"))
+        parser.add_argument(*aliases.get_aliases_str("githubowner"), help="GitHub Owner", dest='owner',
+                            default=varenvs.get_env("githubowner"))
+        conf = parser.parse_args()
+
+    return conf
 
 
 def get_project_list():
@@ -350,7 +421,7 @@ def get_alerts(project):
         res_ = json.loads(call_ws_api(data=alerts_by_vuln))["alerts"]
         for alert_ in res_:
             res.append({
-                alert_["vulnerability"]["name"]: alert_["alertUuid"]
+                f'{alert_["vulnerability"]["name"]}-{alert_["library"]["artifactId"]}': alert_["alertUuid"]
             })
     except:
         pass
@@ -369,8 +440,9 @@ def get_ignored_alerts(project):
         res_ = json.loads(call_ws_api(data=ign_alerts))["alerts"]
         for vuln_ in res_:
             if vuln_["type"] == 'SECURITY_VULNERABILITY':
+                # vuln_["vulnerability"]["description"]
                 res.append({
-                    (vuln_["vulnerability"]["name"], vuln_["alertUuid"]): {vuln_["vulnerability"]["description"] : vuln_["vulnerability"]["lastUpdated"]}
+                    (vuln_["vulnerability"]["name"], vuln_["alertUuid"], vuln_["library"]["artifactId"]): {vuln_["comments"] : vuln_["vulnerability"]["lastUpdated"]}
                 })
             elif vuln_["type"] == 'REJECTED_BY_POLICY_RESOURCE':
                 res.append({
@@ -494,10 +566,11 @@ def exec_input_yaml(input_data):
 
                     for alert_ in alerts:
                         if try_or_error(lambda: alert_["vulnerability"]["name"], f'{alert_["description"]}-{alert_["library"]["artifactId"]}') == vuln_id and "SNYK" not in vuln_id:
+                            vuln_desc = f"policy violation: lib {alert_['library']['artifactId']}" if alert_["type"] != 'SECURITY_VULNERABILITY' else f"vulnerability {vuln_id}"
                             if delta < IGNORE_PERIOD:
                                 logger.info(set_ignore_alert(alert_uuid=alert_["alertUuid"],comment=note, vuln=vuln_id))
                             else:
-                                logger.warning(f"The alert {alert_['alertUuid']} (vulnerability {vuln_id}) in the project "
+                                logger.warning(f"The alert created by {vuln_desc} in the project "
                                                f"{try_or_error(lambda: el_['name'], try_or_error(lambda: el_['projectname'], ''))} "
                                                f"was not ignored. The end date has passed")
             except Exception as err:
@@ -548,10 +621,17 @@ def main():
 
     try:
         args = parse_args()
+
         chp_ = check_patterns()
         if chp_:
             logger.error("Missing or malformed configuration parameters:")
             [logger.error(el_) for el_ in chp_]
+            exit(-1)
+
+        checks_ = check_parameters()
+        if checks_:
+            logger.error("Missing or malformed configuration parameters:")
+            [logger.error(el_) for el_ in checks_]
             exit(-1)
 
         if args.pat and args.repo and (args.owner or "/" in args.repo):
@@ -561,53 +641,73 @@ def main():
                 input_data = repo.get_contents(args.yaml).decoded_content.decode("utf-8")
             except Exception as err:
                 logger.error(f"Access to {args.owner}/{args.repo} forbidden")
-        logger.info(f'[{fn()}] Getting project list')
+
+        cve_whitelist = []
+        if args.whitelist:
+            try:
+                with open(args.whitelist, 'r') as file:
+                    cve_whitelist = [line.strip() for line in file.readlines()]
+            except FileNotFoundError:
+                cve_whitelist = args.whitelist.split(",")
 
         config_dest_project_name = f"{args.dest_project_name} - {args.dest_project_version}" if args.dest_project_version else args.dest_project_name
 
         if args.baseline_project_token:  # Not creation or uploading YAML file. Just copyt ignored alerts from baseline
+            logger.info("A baseline project token was provided. YAML file will not create/upload")
             config_baseline_project_token = args.baseline_project_token
-            if config_dest_project_name:
-                try:
-                    dest_project_token = args.projecttoken.split(",")[0] if args.projecttoken else\
-                        get_prj_token_by_product_org(parent_token=args.producttoken.split(",")[0]
-                        if args.producttoken else "", dest_prj_name=config_dest_project_name)
+            #if config_dest_project_name:
+            try:
+                dest_project_token = args.projecttoken.split(",")[0] if args.projecttoken else\
+                    get_prj_token_by_product_org(parent_token=args.producttoken.split(",")[0]
+                    if args.producttoken else "", dest_prj_name=config_dest_project_name)
 
-                except Exception as err:
-                    logging.exception(err)
-                    exit(1)
-                source_ignored_alerts = get_ignored_alerts(config_baseline_project_token)
-                dest_alerts = get_alerts(dest_project_token)
-                common_keys = {key[0] for item in source_ignored_alerts for key in item.keys()}
-                ignore_alerts_uuid = [d[key] for d in dest_alerts for key in common_keys if key in d]
-                if ignore_alerts_uuid:
-                    print_header('Ignore alerts in the destination project')
-                    try:
-                        data_ignore = json.dumps({
-                            "requestType": "ignoreAlerts",
-                            "orgToken": args.ws_token,
-                            "userKey": args.ws_user_key,
-                            "alertUuids": ignore_alerts_uuid,
-                            "comments": "Automatically ignored by Mend utility"
-                        })
-                        logger.info(f"{json.loads(call_ws_api(data=data_ignore))['message']}")
-                    except Exception as err:
-                        logger.error(f"Ignoring alerts process failed. Details: {err}")
-                else:
-                    logger.info("Nothing to ignore")
-        else:
-            short_lst_prj = get_project_list()
-            if args.mode.lower() == "create":
-                logger.info(create_yaml_ignored_alerts(short_lst_prj, config_dest_project_name))
-            elif args.yaml and args.mode.lower() == "load":
+            except Exception as err:
+                logging.exception(err)
+                exit(1)
+            source_ignored_alerts = get_ignored_alerts(config_baseline_project_token)
+            dest_alerts = get_alerts(dest_project_token)
+            common_keys = {(key[0], try_or_error(lambda: key[2], "")) for item in source_ignored_alerts for key in item.keys()}
+            list_of_uuid = [d for d in dest_alerts for key in common_keys if (f'{key[0]}-{key[1]}' if key[1] else key[0]) in d]
+            ignore_alerts_uuid = [value for d in list_of_uuid for value in d.values()]
+            ignore_alerts_uuid.extend([d[key] for d in dest_alerts for key in d.keys() if any(s in key for s in cve_whitelist)])
+
+            if ignore_alerts_uuid:
+                print_header('Ignore alerts in the destination project')
                 try:
-                    input_data = yaml.safe_load(input_data) if input_data else read_yaml(args.yaml)
-                    exec_input_yaml(input_data=input_data)
+                    data_ignore = json.dumps({
+                        "requestType": "ignoreAlerts",
+                        "orgToken": args.ws_token,
+                       "userKey": args.ws_user_key,
+                        "alertUuids": ignore_alerts_uuid,
+                        "comments": "Automatically ignored by Mend utility" if not args.comment else args.comment
+                    })
+                    logger.info(f"{json.loads(call_ws_api(data=data_ignore))['message']}. Was found {len(ignore_alerts_uuid)} alerts")
                 except Exception as err:
-                    logger.error(f"[{fn()}] Impossible to parse file {args.yaml}. Details: {err}")
+                    logger.error(f"Ignoring alerts process failed. Details: {err}")
             else:
-                logger.warning(f'[{fn()}] The mode parameter is not correct, or the Input YAML file name is not provided')
+                logger.info("Nothing to ignore")
+        else:
+            if args.mode:
+                if args.mode.lower() == "create":
+                    logger.info("A baseline project token was not provided. YAML file will be created")
+                    logger.info(f'[{fn()}] Getting project list')
+                    short_lst_prj = get_project_list()
+                    logger.info(create_yaml_ignored_alerts(short_lst_prj, config_dest_project_name))
+                elif args.yaml and args.mode.lower() == "load":
+                    logger.info("A baseline project token was not provided. YAML file will be uploaded")
+                    try:
+                        input_data = yaml.safe_load(input_data) if input_data else read_yaml(args.yaml)
+                        short_lst_prj = get_project_list()
+                        exec_input_yaml(input_data=input_data)
+                    except Exception as err:
+                        logger.error(f"[{fn()}] Impossible to parse file {args.yaml}. Details: {err}")
+                else:
+                    logger.error(f'[{fn()}] The mode parameter {args.mode} is not correct, or the Input YAML file name is not provided')
+                    exit(-1)
+            else:
+                logger.error(f'[{fn()}] The mode parameter is not set')
                 exit(-1)
+
             logger.info(f'[{fn()}] Operation was finished successfully')
     except Exception as err:
         logger.error(f'[{fn()}] Failed to getting project list. Details: {err}')
