@@ -82,6 +82,9 @@ GHPat=
 GHRepo=
 GHOwner=
 ```
+
+`The tool will create or load data using the input YAML file if a baseline project token is not provided. In case a baseline project token is provided it will be used to ignore alerts by this template (the YAML file would not used).`
+
 ## Input/Output YAML example
 ```yaml
 - productname: Some Product Name  # Product Name  
