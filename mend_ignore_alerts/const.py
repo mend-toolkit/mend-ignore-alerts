@@ -20,7 +20,7 @@ class aliases(Enum): # List of aliases for params
     destprjname = ("-n", "--destProjectName")
     destprjver = ("-v", "--destProjectVersion")
     whitelist = ("-w", "--whitelist")
-
+    comment = ("--comment", "-c")
 
     @classmethod
     def get_aliases_str(cls, key):
