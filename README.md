@@ -57,11 +57,11 @@ $ pip install mend-ignore-alerts
 | **&#x2011;&#x2011;ghpat**                           | `WS_GHPAT`        | `string` |    No    | GitHub PAT                                                                                                                                                                                                          |
 | **&#x2011;&#x2011;ghowner**                         | `WS_GHOWNER`      | `string` |    No    | GitHub Owner                                                                                                                                                                                                        |
 | **&#x2011;&#x2011;ghrepo**                          | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                                                                                                                    |
-`* Note`:
+`* Note:`
 
-`The tool will create or load data using the input YAML file if a baseline project token is not provided. In case a baseline project token is provided it will be used to ignore alerts by this template (the YAML file would not used).
-
-WS_PROJECTTOKEN/--scope used for creating YAML file or as destination project token in case baseline project token provided.`
+* The tool will create or load data using the input YAML file if a baseline project token is not provided. In case a baseline project token is provided it will be used to ignore alerts by this template (the YAML file would not used).
+* WS_PROJECTTOKEN/--scope used for creating YAML file or as destination project token in case baseline project token provided.
+* Pay attention:  The ignoring alerts process ignores all alerts depending on the “whitelist” CVEs or CVEs from the YAML file.
 ## The Config file example
 ```ini
 [DEFAULT]
