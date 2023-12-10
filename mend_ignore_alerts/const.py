@@ -23,6 +23,7 @@ class aliases(Enum): # List of aliases for params
     prjname = ("--prjname", "--projectname")
     #baseline = ("-b", "--baselineProjectToken")
 
+    
     @classmethod
     def get_aliases_str(cls, key):
         res = list()

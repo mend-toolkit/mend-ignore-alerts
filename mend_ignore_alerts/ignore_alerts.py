@@ -101,6 +101,7 @@ def check_patterns():
 
 def check_parameters():
     res = []
+
     if args.baseline_project_token and not (args.dest_project_name or args.dest_project_token) and not args.mode:
         res.append("A Baseline Project Token was provided, but the destination project Name or Token was not set")
 
@@ -210,6 +211,7 @@ def parse_args():
                             default=varenvs.get_env("wsmode"), required=False)
         parser.add_argument(*aliases.get_aliases_str("yaml"), help="Output or input YAML file", dest='yaml',
                             default=varenvs.get_env("yaml"))
+
         parser.add_argument(*aliases.get_aliases_str("comment"), help="The default comment for ignoring ",
                             dest='comment', default="")
         parser.add_argument(*aliases.get_aliases_str("githubpat"), help="GitHub PAT", dest='pat',
@@ -224,6 +226,7 @@ def parse_args():
     if not conf.baseline_project_token:
         conf.baseline_project_token = conf.projecttoken.split(",")[0] if conf.projecttoken else ""
     conf.mode = "baseline" if not conf.mode else conf.mode
+
     return conf
 
 

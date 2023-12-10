@@ -37,7 +37,6 @@ $ pip install mend-ignore-alerts
 > 
 > Command-line arguments take precedence over environment variables.  
 
-
 | CLI argument                                      | Env. Variable     |   Type   | Required | Description                                                                                                                                                                                                         |
 |:--------------------------------------------------|:------------------|:--------:|:--------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **&#x2011;&#x2011;help**                          |                   | `switch` |    No    | Show help and exit                                                                                                                                                                                                  |
@@ -69,6 +68,7 @@ $ pip install mend-ignore-alerts
   CVE-uuuu-nnnn
 
 ## Config file example
+
 ```ini
 [DEFAULT]
 wsUrl=
