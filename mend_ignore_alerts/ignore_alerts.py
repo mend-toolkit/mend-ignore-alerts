@@ -101,11 +101,12 @@ def check_patterns():
 
 def check_parameters():
     res = []
-    if args.baseline_project_token and not (args.dest_project_name or args.projecttoken):
+
+    if args.baseline_project_token and not (args.dest_project_name or args.dest_project_token) and not args.mode:
         res.append("A Baseline Project Token was provided, but the destination project Name or Token was not set")
 
-    if not args.baseline_project_token and not (args.mode or args.yaml):
-        res.append("A Baseline Project Token was not provided, but the YAML file and Mode parameter were not set")
+    if not args.baseline_project_token and not args.yaml:
+        res.append("A Baseline Project Token was not provided, but the YAML file name was not set")
 
     return res
 
@@ -132,6 +133,7 @@ def parse_args():
         baseline_project_token: str
         dest_project_name: str
         dest_project_version: str
+        dest_project_token: str
         projecttoken: str
         producttoken: str
         whitelist: str
@@ -145,7 +147,10 @@ def parse_args():
 
     if len(sys.argv) < 3:
         maybe_config_file = True
+
     if len(sys.argv) == 1:
+        logger.info("No one input parameters were provided. "
+                    "The tool trying to get configuration parameters from default params.config file.")
         conf_file = "../params.config"
     elif not sys.argv[1].startswith('-'):
         conf_file = sys.argv[1]
@@ -166,6 +171,7 @@ def parse_args():
                 baseline_project_token = config.get('DEFAULT', 'baselineProjectToken', fallback=False),
                 dest_project_name = config.get('DEFAULT', 'destProjectName', fallback=False),
                 dest_project_version = config.get('DEFAULT', 'destProjectVersion', fallback=False),
+                dest_project_token = config.get('DEFAULT', 'destProjectToken', fallback=False),
                 projecttoken = config.get('DEFAULT', 'destProjectToken', fallback=False),
                 mode=config.get('DEFAULT', 'mode', fallback=False),
                 yaml=config.get('DEFAULT', 'yaml', fallback=False),
@@ -187,25 +193,27 @@ def parse_args():
                             default=varenvs.get_env("wsapikey"), required=not varenvs.get_env("wsapikey"))
         parser.add_argument(*aliases.get_aliases_str("url"), help="Mend server URL", dest='ws_url',
                             default=varenvs.get_env("wsurl"), required=not varenvs.get_env("wsurl"))
-        parser.add_argument(*aliases.get_aliases_str("baseline"), help='Mend Baseline project token', dest='baseline_project_token',
-                            required=False)
-        parser.add_argument(*aliases.get_aliases_str("destprjname"), help='Mend Destination Project Name', dest='dest_project_name',
-                            required=False)
+        parser.add_argument(*aliases.get_aliases_str("destprjname"), help='Mend Destination Project Name',
+                            dest='dest_project_name', required=False)
         parser.add_argument(*aliases.get_aliases_str("destprjver"), help='Mend Destination Project Version',
                             dest='dest_project_version', required=False)
-        parser.add_argument(*aliases.get_aliases_str("whitelist"), help='CVE white list file', dest='whitelist', default="", required=False)
-        parser.add_argument(*aliases.get_aliases_str("productkey"), help="Mend product scope", dest='producttoken',
-                            default=varenvs.get_env("wsproduct"))
-        parser.add_argument(*aliases.get_aliases_str("projectkey"), help="Mend project scope", dest='projecttoken',
-                            default=varenvs.get_env("wsproject"))
-        parser.add_argument(*aliases.get_aliases_str("exclude"), help="Exclude Mend project/product scope", dest='exclude',
-                            default=varenvs.get_env("wsexclude"))
+        parser.add_argument(*aliases.get_aliases_str("destprjtoken"), help='Mend Destination Project Token',
+                            dest='dest_project_token', required=False)
+        parser.add_argument(*aliases.get_aliases_str("whitelist"), help='CVE white list file',
+                            dest='whitelist', default="", required=False)
+        parser.add_argument(*aliases.get_aliases_str("productkey"), help="Mend product scope",
+                            dest='producttoken', default=varenvs.get_env("wsproduct"))
+        parser.add_argument(*aliases.get_aliases_str("projectkey"), help="Mend project scope or baseline project token",
+                            dest='projecttoken', default=varenvs.get_env("wsproject"))
+        parser.add_argument(*aliases.get_aliases_str("exclude"), help="Exclude Mend project/product scope",
+                            dest='exclude', default=varenvs.get_env("wsexclude"))
         parser.add_argument(*aliases.get_aliases_str("mode"), help="Creation or loading YAML file ", dest='mode',
                             default=varenvs.get_env("wsmode"), required=False)
         parser.add_argument(*aliases.get_aliases_str("yaml"), help="Output or input YAML file", dest='yaml',
                             default=varenvs.get_env("yaml"))
-        parser.add_argument(*aliases.get_aliases_str("comment"), help="The default comment for ignoring ", dest='comment',
-                            default="")
+
+        parser.add_argument(*aliases.get_aliases_str("comment"), help="The default comment for ignoring ",
+                            dest='comment', default="")
         parser.add_argument(*aliases.get_aliases_str("githubpat"), help="GitHub PAT", dest='pat',
                             default=varenvs.get_env("githubpat"))
         parser.add_argument(*aliases.get_aliases_str("githubrepo"), help="GitHub Repo", dest='repo',
@@ -213,6 +221,11 @@ def parse_args():
         parser.add_argument(*aliases.get_aliases_str("githubowner"), help="GitHub Owner", dest='owner',
                             default=varenvs.get_env("githubowner"))
         conf = parser.parse_args()
+        conf.baseline_project_token = ""
+
+    if not conf.baseline_project_token:
+        conf.baseline_project_token = conf.projecttoken.split(",")[0] if conf.projecttoken else ""
+    conf.mode = "baseline" if not conf.mode else conf.mode
 
     return conf
 
@@ -299,7 +312,7 @@ def call_ws_api(data, header={"Content-Type": "application/json"}, method="POST"
     return res
 
 
-def create_yaml_ignored_alerts(prj_tokens, project_name):
+def create_yaml_ignored_alerts(prj_tokens, project_name, output_file):
     try:
         data_yml = []
         for token_ in prj_tokens:
@@ -324,11 +337,11 @@ def create_yaml_ignored_alerts(prj_tokens, project_name):
                         'projectname': val_arr[1] if not project_name else project_name,  # Project Name
                         'vulns': vuln
                     })
-        with open(f'{args.yaml}', 'w') as file:
+        with open(f'{output_file}', 'w') as file:
             yaml.dump(data_yml, file)
-        return f"The file {args.yaml} created successfully"
+        return f"The file {output_file} created successfully"
     except Exception as err:
-        return f"The file {args.yaml} was not created. Details: {err}"
+        return f"The file {output_file} was not created. Details: {err}"
 
 
 def create_waiver():
@@ -601,7 +614,7 @@ def get_prj_token_by_product_org(parent_token, dest_prj_name):
         if len(match_prjs) == 1:
             return match_prjs[0]
         elif len(match_prjs) == 0:
-            logger.error(f"Project {dest_prj_name} hasn't been found in this product. "
+            logger.error(f"Project {dest_prj_name} hasn't been found. "
                                      f"Please check the provided destination project name and try again")
         else:
             logger.error(f"There are more than one project with the same name {dest_prj_name}")
@@ -652,15 +665,31 @@ def main():
 
         config_dest_project_name = f"{args.dest_project_name} - {args.dest_project_version}" if args.dest_project_version else args.dest_project_name
 
-        if args.baseline_project_token:  # Not creation or uploading YAML file. Just copyt ignored alerts from baseline
-            logger.info("A baseline project token was provided. YAML file will not create/upload")
+        if args.mode.lower() == "create":
+            logger.info("YAML file will be created")
+            logger.info(f'[{fn()}] Getting project list')
+            short_lst_prj = get_project_list()
+            logger.info(create_yaml_ignored_alerts(short_lst_prj, config_dest_project_name,
+                                            output_file=args.yaml if args.yaml else "output.yaml"))
+        elif args.mode.lower() == "load":
+            if args.yaml:
+                logger.info("YAML file will be uploaded")
+                try:
+                    input_data = yaml.safe_load(input_data) if input_data else read_yaml(args.yaml)
+                    short_lst_prj = get_project_list()
+                    exec_input_yaml(input_data=input_data)
+                except Exception as err:
+                    logger.error(f"[{fn()}] Impossible to parse file {args.yaml}. Details: {err}")
+            else:
+                logger.error(f'[{fn()}] The Input YAML file name is not provided. Impossible to upload data')
+                exit(-1)
+        elif args.mode.lower() == "baseline":
+            logger.info(f'[{fn()}] The baseline token will be used as template. YAML file will not create/upload')
             config_baseline_project_token = args.baseline_project_token
-            #if config_dest_project_name:
             try:
-                dest_project_token = args.projecttoken.split(",")[0] if args.projecttoken else\
+                dest_project_token = args.dest_project_token if args.dest_project_token else\
                     get_prj_token_by_product_org(parent_token=args.producttoken.split(",")[0]
                     if args.producttoken else "", dest_prj_name=config_dest_project_name)
-
             except Exception as err:
                 logging.exception(err)
                 exit(1)
@@ -677,40 +706,21 @@ def main():
                     data_ignore = json.dumps({
                         "requestType": "ignoreAlerts",
                         "orgToken": args.ws_token,
-                       "userKey": args.ws_user_key,
+                        "userKey": args.ws_user_key,
                         "alertUuids": ignore_alerts_uuid,
                         "comments": "Automatically ignored by Mend utility" if not args.comment else args.comment
                     })
-                    logger.info(f"{json.loads(call_ws_api(data=data_ignore))['message']}. Was found {len(ignore_alerts_uuid)} alerts")
+                    logger.info(f"{json.loads(call_ws_api(data=data_ignore))['message']}. "
+                                f"Found {len(ignore_alerts_uuid)} alerts")
                 except Exception as err:
                     logger.error(f"Ignoring alerts process failed. Details: {err}")
             else:
                 logger.info("Nothing to ignore")
         else:
-            if args.mode:
-                if args.mode.lower() == "create":
-                    logger.info("A baseline project token was not provided. YAML file will be created")
-                    logger.info(f'[{fn()}] Getting project list')
-                    short_lst_prj = get_project_list()
-                    logger.info(create_yaml_ignored_alerts(short_lst_prj, config_dest_project_name))
-                elif args.yaml and args.mode.lower() == "load":
-                    logger.info("A baseline project token was not provided. YAML file will be uploaded")
-                    try:
-                        input_data = yaml.safe_load(input_data) if input_data else read_yaml(args.yaml)
-                        short_lst_prj = get_project_list()
-                        exec_input_yaml(input_data=input_data)
-                    except Exception as err:
-                        logger.error(f"[{fn()}] Impossible to parse file {args.yaml}. Details: {err}")
-                else:
-                    logger.error(f'[{fn()}] The mode parameter {args.mode} is not correct, or the Input YAML file name is not provided')
-                    exit(-1)
-            else:
-                logger.error(f'[{fn()}] The mode parameter is not set')
-                exit(-1)
-
-            logger.info(f'[{fn()}] Operation was finished successfully')
+            logger.error(f'[{fn()}] The provided mode {args.mode} is not correct. Fix it and try again')
+            exit(-1)
     except Exception as err:
-        logger.error(f'[{fn()}] Failed to getting project list. Details: {err}')
+        logger.error(f'[{fn()}] The process failed. Details: {err}')
         exit(-1)
 
 
