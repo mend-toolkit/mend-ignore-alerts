@@ -55,14 +55,14 @@ $ pip install mend-ignore-alerts
 | **&#x2011;&#x2011;ghpat**                         | `WS_GHPAT`        | `string` |    No    | GitHub PAT                                                                                                                                                                                                          |
 | **&#x2011;&#x2011;whitelist**                     |       | `string` |    No    | File with list of CVEs or list of CVEs divided by comma.                                                                                                                                                            |
 | **&#x2011;&#x2011;ghowner**                       | `WS_GHOWNER`      | `string` |    No    | GitHub Owner                                                                                                                                                                                                        |
-| **&#x2011;&#x2011;ghrepo**                        | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                                                                                                                    |
-`* Note:`
+| **&#x2011;&#x2011;ghrepo**                        | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                                                                              
 
-* The tool will create or load data using the input YAML file depending on the value of a **mode** parameter.
-  * In the case of an omitted **mode** parameter, the baseline project token (set in the –scope argument) will be used as a template. (the YAML file would not used).
-  * In the case of **create** mode, the WS_PROJECTTOKEN/--scope contains a list of project tokens for creating a YAML file.
+> **Note:**
+> * The tool will create or load data using the input YAML file depending on the value of a **mode** parameter.
+>   * In the case of an omitted **mode** parameter, the baseline project token (set in the –scope argument) will be used as a template. (the YAML file would not used).
+>   * In the case of **create** mode, the WS_PROJECTTOKEN/--scope contains a list of project tokens for creating a YAML file.
 * **Pay attention**:  The ignoring alerts process ignores all alerts depending on the “whitelist” CVEs or CVEs from the YAML file.
-* The file should contain the list of CVEs like this:  
+ * The file should contain the list of CVEs like this:  
   CVE-xxxx-yyyy  
   CVE-zzzz-mmmm  
   CVE-uuuu-nnnn
