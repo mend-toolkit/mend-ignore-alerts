@@ -1,7 +1,7 @@
 [![Logo](https://resources.mend.io/mend-sig/logo/mend-dark-logo-horizontal.png)](https://www.mend.io/)  
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-yellowgreen.svg)](https://opensource.org/licenses/Apache-2.0)
-[![PyPI](https://img.shields.io/pypi/v/ws-cleanup-tool?style=plastic)](https://pypi.org/project/ws-cleanup-tool/)
+[![PyPI](https://img.shields.io/pypi/v/mend-ignore-alerts?style=plastic)](https://pypi.org/project/mend-ignore-alerts/)
 
 # Ignore Alerts
 
