@@ -1,4 +1,4 @@
-configparser~=5.3.0
+configparser~=6.0.0
 requests~=2.31.0
 setuptools~=65.5.1
 PyYAML~=6.0
