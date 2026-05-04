@@ -24,7 +24,7 @@ Set Ignore status for alert or reactivate it based on input YAML file or baselin
 - **Windows (PowerShell):**	10, 2012, 2016
 
 ## Prerequisites
-- Python 3.9+
+- Python 3.9-3.14
 - Mend user with admin permissions
 
 ## Installation

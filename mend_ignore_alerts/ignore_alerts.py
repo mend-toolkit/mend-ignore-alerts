@@ -431,7 +431,6 @@ def extract_url(url: str) -> str:
 
 
 def call_ws_api(data, header={"Content-Type": "application/json"}, method="POST"):
-    global args
     data_json = json.loads(data)
     data_json["agentInfo"] = AGENT_INFO
     try:
@@ -486,7 +485,6 @@ def create_yaml_ignored_alerts(prj_tokens, project_name, output_file):
 
 
 def create_waiver():
-    global args
     data = json.dumps(
         {
             "requestType": "getProjectAlerts",
