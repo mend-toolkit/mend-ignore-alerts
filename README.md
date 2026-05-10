@@ -24,7 +24,7 @@ Set Ignore status for alert or reactivate it based on input YAML file or baselin
 - **Windows (PowerShell):**	10, 2012, 2016
 
 ## Prerequisites
-- Python 3.9-3.14
+- Python 3.10-3.14
 - Mend user with admin permissions
 
 ## Installation
@@ -159,7 +159,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9']
+        python-version: ['3.10']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
