@@ -16,10 +16,10 @@ setuptools.setup(
     url=f"https://github.com/mend-toolkit/{__tool_name__.replace('_', '-')}",
     license='LICENSE.txt',
     packages=setuptools.find_packages(),
-    long_description=open("README.md").read(),
+    long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     python_requires='>=3.10',
-    install_requires=[line.strip() for line in open("requirements.txt").readlines()],
+    install_requires=[line.strip() for line in open("requirements.txt", encoding="utf-8").readlines()],
     classifiers=[
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
