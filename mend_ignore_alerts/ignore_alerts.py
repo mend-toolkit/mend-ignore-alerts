@@ -332,7 +332,8 @@ def parse_args():
             *aliases.get_aliases_str("ignoredalertsdetails"),
             help="Get ignored alerts details for the project",
             dest="ignored_alerts_details",
-            default='False',
+            type=lambda v: v.lower() in ('true', '1', 'yes'),
+            default=False,
         )
 
         conf = parser.parse_args()
