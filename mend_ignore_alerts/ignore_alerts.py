@@ -328,6 +328,13 @@ def parse_args():
             dest="owner",
             default=varenvs.get_env("githubowner"),
         )
+        parser.add_argument(
+            *aliases.get_aliases_str("ignoredalertsdetails"),
+            help="Get ignored alerts details for the project",
+            dest="ignored_alerts_details",
+            default='False',
+        )
+
         conf = parser.parse_args()
         conf.baseline_project_token = ""
 
@@ -994,8 +1001,23 @@ def main():
                     )
                     logger.info(
                         f"{json.loads(call_ws_api(data=data_ignore))['message']}. "
-                        f"Found {len(ignore_alerts_uuid)} alerts"
+                        f"Found {len(ignore_alerts_uuid)} alerts"   
                     )
+                    ign_alerts = json.dumps(
+                        {
+                            "requestType": "getProjectIgnoredAlerts",
+                            "userKey": args.ws_user_key,
+                            "projectToken": dest_project_token,
+                        }
+                    )
+                    if args.ignored_alerts_details:
+                        ignored_alerts = json.loads(call_ws_api(data=ign_alerts))
+                        alerts_by_uuid = {a.get("alertUuid"): a for a in ignored_alerts.get("alerts", [])}
+                        for uuid in ignore_alerts_uuid:
+                            alert = alerts_by_uuid.get(uuid)
+                            if alert:
+                                logger.info(f"{alert.get('type')} alert has been automatically ignored. Library: {alert.get('library', {}).get('filename', 'unknown')}")
+
                 except Exception as err:
                     logger.error(f"Ignoring alerts process failed. Details: {err}")
             else:
