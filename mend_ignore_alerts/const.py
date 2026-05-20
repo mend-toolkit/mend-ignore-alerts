@@ -22,6 +22,7 @@ class aliases(Enum): # List of aliases for params
     mode = ("--mode", "-mode")
     prjname = ("--prjname", "--projectname")
     #baseline = ("-b", "--baselineProjectToken")
+    ignoredalertsdetails = ("--ignoredAlertsDetails", "-iad")
 
     
     @classmethod

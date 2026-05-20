@@ -24,7 +24,7 @@ Set Ignore status for alert or reactivate it based on input YAML file or baselin
 - **Windows (PowerShell):**	10, 2012, 2016
 
 ## Prerequisites
-- Python 3.9+
+- Python 3.10-3.14
 - Mend user with admin permissions
 
 ## Installation
@@ -56,7 +56,8 @@ $ pip install mend-ignore-alerts
 | **&#x2011;&#x2011;ghpat**                         | `WS_GHPAT`        | `string` |    No    | GitHub PAT                                                                                                                                                                                                          |
 | **&#x2011;&#x2011;whitelist**                     |       | `string` |    No    | File with list of CVEs or list of CVEs divided by comma.                                                                                                                                                            |
 | **&#x2011;&#x2011;ghowner**                       | `WS_GHOWNER`      | `string` |    No    | GitHub Owner                                                                                                                                                                                                        |
-| **&#x2011;&#x2011;ghrepo**                        | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                                                                              
+| **&#x2011;&#x2011;ghrepo**                        | `WS_GHREPO`       | `string` |    No    | GitHub Repo name                                                                                                                                                              |
+| **&#x2011;&#x2011;ignoredAlertsDetails, &#x2011;iad** |               | `switch` |    No    | Log details (type and library) of each ignored alert                                                                                                                          |
 
 > **Note:**
 > * The tool will create or load data using the input YAML file depending on the value of a **mode** parameter.
@@ -159,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9']
+        python-version: ['3.10']
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
