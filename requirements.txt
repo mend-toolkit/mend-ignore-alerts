@@ -1,5 +1,5 @@
 configparser~=7.2.0
-requests~=2.33.1
+requests~=2.34.2
 setuptools~=82.0.1
 PyYAML~=6.0.3
 PyGithub~=2.9.1
